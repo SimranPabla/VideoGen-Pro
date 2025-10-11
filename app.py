@@ -3,13 +3,15 @@ import os
 import cv2
 import numpy as np
 import imageio
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = '/static/uploads/'
-OUTPUT_FOLDER = '/static/outputs/'
-os.makedirs('static/uploads', exist_ok=True)
-os.makedirs('static/outputs', exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+OUTPUT_FOLDER = os.path.join(BASE_DIR, 'static', 'outputs')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # --Basic Zoom Effect Function--
 def zoom_effect(image_path, output_path):
@@ -20,7 +22,7 @@ def zoom_effect(image_path, output_path):
     h, w, _ = img.shape
 
     for i in range(10):
-        scale = 1 + i * 0.2
+        scale = 1 + i * 0.02
         resized = cv2.resize(img, None, fx=scale, fy=scale)
         rh, rw, _ = resized.shape
 
@@ -40,19 +42,19 @@ def index():
         if not file:
             return "No file uploaded.", 400
         
-        filename = file.filename
-        image_path = os.path.join('static/UPLOAD_FOLDER', filename)
+        filename = secure_filename(file.filename)
+        image_path = os.path.join(UPLOAD_FOLDER, filename)
         output_filename = 'animated_' + filename.rsplit('.', 1)[0] + '.gif'
-        output_path = os.path.join('static/OUTPUT_FOLDER', output_filename)
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
         
         file.save(image_path)
         zoom_effect(image_path, output_path)
 
-        return render_template('index.html', output_image=output_filename)
+        return render_template('index.html', result_gif=output_filename)
     
     return render_template('index.html')
 
-@app.route('/static/<filename>')
+@app.route('/outputs/<filename>')
 def send_output(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
 
