@@ -6,6 +6,23 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center;padding: 50px; }
         input[type="file"] { margin: 20px; }
+        .btn { background-color: #86A3A3; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .btn:hover { background-color: #5b7c7c; }
+        img { margin-top: 30 px; width: 300px; border: 2px solid #ccc;border-radius: 10px; }
     </style>
+</head>
+<body>
+    <h1> GifMagic MVP </h1>
+    <p> Upload a image to see it come alive as a short animated GIF!</p>
 
+    <form method="post" enctype="multipart/form-data">
+        <INPUT TYPE="file" name = "image" accept="image/*" required>
+        <br>
+        <button type="submit" class = "btn">Generate GIF</button>
+    </form>
+    {% if result_gif %}
+        <h2>Your animated GIF:</h2>
+        <img src="{{url_for('send_output',filename=result_gif) }}" alt="Generated GIF">
+        <p><a href = "{{url_for('send_output',filename=result_gif)}}" download>Download GIF</a></p>
+    {% endif %}
 </html>
