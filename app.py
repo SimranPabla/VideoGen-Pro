@@ -14,24 +14,43 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # --Basic Zoom Effect Function--
-def zoom_effect(image_path, output_path):
+def apply_effect(image_path, output_path, effect):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError("Image not found or unable to read.")
     frames = []    
     h, w, _ = img.shape
+    num_frames = 10
 
-    for i in range(10):
-        scale = 1 + i * 0.02
-        resized = cv2.resize(img, None, fx=scale, fy=scale)
-        rh, rw, _ = resized.shape
+    for i in range(num_frames):
+        if effect == "zoom":
+            scale = 1 + i * 0.02
+            resized = cv2.resize(img, None, fx=scale, fy=scale)
+            rh, rw, _ = resized.shape
 
-        #crop back to original size
-        top = (rh - h) // 2
-        left = (rw - w) // 2
-        cropped = resized[top:top+h, left:left+w]
+            #crop back to original size
+            top = (rh - h) // 2
+            left = (rw - w) // 2
+            frame = resized[top:top+h, left:left+w]
+        
+        elif effect == "rotate":
+            angle = i * (360 / (num_frames - 1))
+            M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1)
+            frame = cv2.warpAffine(img, M, (w, h))
 
-        frames.append(cropped[:, :, ::-1])  # Convert BGR to RGB
+        elif effect == "pan":
+            shift = int(i * (w / (num_frames - 1)))
+            frame = np.roll(img, shift, axis=1)  # shift horizontally
+
+  
+        elif effect == "fade":
+            alpha = i / (num_frames - 1)
+            frame = cv2.convertScaleAbs(img, alpha=alpha)
+
+        else:
+            frame = img
+
+        frames.append(frame[:, :, ::-1])  # Convert BGR to RGB
 
     imageio.mimsave(output_path, frames, fps=10)
 
@@ -42,13 +61,14 @@ def index():
         if not file:
             return "No file uploaded.", 400
         
+        effect = request.form.get('effect', 'zoom')
         filename = secure_filename(file.filename)
         image_path = os.path.join(UPLOAD_FOLDER, filename)
-        output_filename = 'animated_' + filename.rsplit('.', 1)[0] + '.gif'
+        output_filename = f"{effect}animated_" + filename.rsplit('.', 1)[0] + ".gif"
         output_path = os.path.join(OUTPUT_FOLDER, output_filename)
         
         file.save(image_path)
-        zoom_effect(image_path, output_path)
+        apply_effect(image_path, output_path,effect)
 
         return render_template('index.html', result_gif=output_filename)
     
