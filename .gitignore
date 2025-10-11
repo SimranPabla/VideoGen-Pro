@@ -214,4 +214,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-static/
+/static/uploads/
+/static/outputs/
