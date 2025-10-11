@@ -2,48 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GifMagic MVP </title>
+    <title>GifMagic MVP</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center;padding: 50px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; scroll-behavior: smooth; }
         input[type="file"] { margin: 20px; }
         .btn { background-color: #86A3A3; color: white; padding: 10px 20px; border: none; cursor: pointer; }
         .btn:hover { background-color: #5b7c7c; }
-        img { margin-top: 30px; width: 300px; border: 2px solid #ccc;border-radius: 10px; }
+        img { width: 300px; border: 2px solid #ccc; border-radius: 10px; margin: 10px 0; }
+        .image-container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start;  /* <-- Align top edges */
+            gap: 40px; 
+            margin-top: 30px; 
+        }
+        h3 { margin: 0 0 10px 0; }  /* <-- Reduce heading spacing */
     </style>
+
 </head>
 <body>
-    <h1> GifMagic MVP </h1>
-    <p> Upload a image to see it come alive as a short animated GIF!</p>
+    <h1>GifMagic MVP</h1>
+    <p>Upload an image to see it come alive as a short animated GIF!</p>
 
-    {% if not uploaded_image %}
-        <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data">
+        {% if not uploaded_image %}
             <input type="file" name="image" accept="image/*" required>
-            <br>
-            <button type="submit">Upload Image</button>
-        </form>
+            <button type="submit" class="btn">Upload Image</button>
         {% else %}
-            <form method="POST">
-                <label for="effect">Choose an animation effect:</label>
-                <select name="effect">
-                    <option value="zoom">Zoom</option>
-                    <option value="rotate">Rotate</option>
-                    <option value="pan">Pan</option>
-                    <option value="fade">Fade</option>
-                </select>
-                <br><br>
-                <button type="submit">Apply Effect</button>
-                <br><br>
-            </form>
+            <select name="effect">
+                <option value="zoom">Zoom</option>
+                <option value="rotate">Rotate</option>
+                <option value="pan">Pan</option>
+                <option value="fade">Fade</option>
+            </select>
+            <button type="submit" class="btn">Apply Effect</button>
+            <a href="{{ url_for('reset') }}" class="btn" style="background-color: #ccc; color: black;">Reset</a>
+        {% endif %}
+    </form>
 
-        <form method="GET" action="{{ url_for('reset') }}">
-            <button type="submit" class="btn reset-btn">Upload New Image</button>
-        </form>
+    {% if uploaded_image %}
+    <div class="image-container" id="result-section">
+        <div>
+            <h3>Uploaded Image:</h3>
+            <img src="{{ url_for('send_uploaded', filename=uploaded_image) }}" alt="Uploaded Image">
+        </div>
+        {% if result_gif %}
+        <div>
+            <h3>Animated GIF:</h3>
+            <img src="{{ url_for('send_output', filename=result_gif) }}" alt="Generated GIF">
+            <p><a href="{{ url_for('send_output', filename=result_gif) }}" download>Download GIF</a></p>
+        </div>
+        {% endif %}
+    </div>
     {% endif %}
 
-    {% if result_gif %}
-        <h2>Your animated GIF:</h2>
-        <img src="{{url_for('send_output',filename=result_gif) }}" alt="Generated GIF">
-        <p><a href = "{{url_for('send_output',filename=result_gif)}}" download>Download GIF</a></p>
+    {% if scroll_to %}
+    <script>
+        window.onload = () => {
+            document.getElementById("{{ scroll_to }}").scrollIntoView({ behavior: "smooth" });
+        };
+    </script>
     {% endif %}
 </body>
 </html>

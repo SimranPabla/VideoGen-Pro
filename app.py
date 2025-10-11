@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, session, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, session, redirect, url_for, jsonify
 import os
 import cv2
 import numpy as np
@@ -16,12 +16,12 @@ OUTPUT_FOLDER = os.path.join(BASE_DIR, 'static', 'outputs')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# --Basic Zoom Effect Function--
+# --- EFFECT FUNCTION ---
 def apply_effect(image_path, output_path, effect):
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError("Image not found or unable to read.")
-    frames = []    
+    frames = []
     h, w, _ = img.shape
     num_frames = 10
 
@@ -30,22 +30,19 @@ def apply_effect(image_path, output_path, effect):
             scale = 1 + i * 0.02
             resized = cv2.resize(img, None, fx=scale, fy=scale)
             rh, rw, _ = resized.shape
-
-            #crop back to original size
             top = (rh - h) // 2
             left = (rw - w) // 2
-            frame = resized[top:top+h, left:left+w]
-        
+            frame = resized[top:top + h, left:left + w]
+
         elif effect == "rotate":
             angle = i * (360 / (num_frames - 1))
-            M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1)
+            M = cv2.getRotationMatrix2D((w // 2, h // 2), angle, 1)
             frame = cv2.warpAffine(img, M, (w, h))
 
         elif effect == "pan":
             shift = int(i * (w / (num_frames - 1)))
-            frame = np.roll(img, shift, axis=1)  # shift horizontally
+            frame = np.roll(img, shift, axis=1)
 
-  
         elif effect == "fade":
             alpha = i / (num_frames - 1)
             frame = cv2.convertScaleAbs(img, alpha=alpha)
@@ -53,16 +50,18 @@ def apply_effect(image_path, output_path, effect):
         else:
             frame = img
 
-        frames.append(frame[:, :, ::-1])  # Convert BGR to RGB
+        frames.append(frame[:, :, ::-1])  # Convert BGR → RGB
 
     imageio.mimsave(output_path, frames, fps=10)
 
+
+# --- ROUTES ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
     uploaded_image = session.get('uploaded_image')
 
     if request.method == 'POST':
-        # 1️⃣ Handle file upload
+        # File upload
         if 'image' in request.files and request.files['image'].filename != '':
             file = request.files['image']
             filename = secure_filename(file.filename)
@@ -70,9 +69,9 @@ def index():
             file.save(image_path)
             session.permanent = True
             session['uploaded_image'] = filename
-            return redirect(url_for('index'))
+            return redirect(url_for('index') + "#result-section")
 
-        # 2️⃣ Handle effect application
+        # Apply effect
         effect = request.form.get('effect')
         if effect and uploaded_image:
             image_path = os.path.join(UPLOAD_FOLDER, uploaded_image)
@@ -80,18 +79,27 @@ def index():
             output_path = os.path.join(OUTPUT_FOLDER, output_filename)
 
             apply_effect(image_path, output_path, effect)
-            return render_template('index.html', uploaded_image=uploaded_image, result_gif=output_filename)
+            return render_template('index.html',
+                                   uploaded_image=uploaded_image,
+                                   result_gif=output_filename,
+                                   scroll_to="result-section")
 
-    # GET request
     return render_template('index.html', uploaded_image=uploaded_image, result_gif=None)
+
+
+@app.route('/uploads/<filename>')
+def send_uploaded(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
 
 @app.route('/outputs/<filename>')
 def send_output(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+
 @app.route('/reset')
 def reset():
-    session.pop('uploaded_image', None)  # Remove uploaded image from session
+    session.pop('uploaded_image', None)
     return redirect(url_for('index'))
 
 
