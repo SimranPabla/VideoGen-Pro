@@ -1,11 +1,14 @@
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, session, redirect, url_for
 import os
 import cv2
 import numpy as np
 import imageio
 from werkzeug.utils import secure_filename
+from datetime import timedelta
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+app.permanent_session_lifetime = timedelta(minutes=30)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
@@ -56,27 +59,41 @@ def apply_effect(image_path, output_path, effect):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        file = request.files['image']
-        if not file:
-            return "No file uploaded.", 400
-        
-        effect = request.form.get('effect', 'zoom')
-        filename = secure_filename(file.filename)
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
-        output_filename = f"{effect}animated_" + filename.rsplit('.', 1)[0] + ".gif"
-        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-        
-        file.save(image_path)
-        apply_effect(image_path, output_path,effect)
+    uploaded_image = session.get('uploaded_image')
 
-        return render_template('index.html', result_gif=output_filename)
-    
-    return render_template('index.html')
+    if request.method == 'POST':
+        # 1️⃣ Handle file upload
+        if 'image' in request.files and request.files['image'].filename != '':
+            file = request.files['image']
+            filename = secure_filename(file.filename)
+            image_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(image_path)
+            session.permanent = True
+            session['uploaded_image'] = filename
+            return redirect(url_for('index'))
+
+        # 2️⃣ Handle effect application
+        effect = request.form.get('effect')
+        if effect and uploaded_image:
+            image_path = os.path.join(UPLOAD_FOLDER, uploaded_image)
+            output_filename = f"{effect}_animated_" + uploaded_image.rsplit('.', 1)[0] + ".gif"
+            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+
+            apply_effect(image_path, output_path, effect)
+            return render_template('index.html', uploaded_image=uploaded_image, result_gif=output_filename)
+
+    # GET request
+    return render_template('index.html', uploaded_image=uploaded_image, result_gif=None)
 
 @app.route('/outputs/<filename>')
 def send_output(filename):
     return send_from_directory(OUTPUT_FOLDER, filename)
+
+@app.route('/reset')
+def reset():
+    session.pop('uploaded_image', None)  # Remove uploaded image from session
+    return redirect(url_for('index'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -15,19 +15,31 @@
     <h1> GifMagic MVP </h1>
     <p> Upload a image to see it come alive as a short animated GIF!</p>
 
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name = "image" accept="image/*" required>
-        <br>
-        <label for="effect">Choose Effects:</label>
-        <select name="effect" id="effect">
-            <option value="zoom">Zoom</option>
-            <option value="rotate">Rotate</option>
-            <option value="pan">Pan</option>
-            <option value="fade">Fade</option>
-        </select>
-        <br><br>
-        <button type="submit" class = "btn">Generate GIF</button>
-    </form>
+    {% if not uploaded_image %}
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <button type="submit">Upload Image</button>
+        </form>
+        {% else %}
+            <form method="POST">
+                <label for="effect">Choose an animation effect:</label>
+                <select name="effect">
+                    <option value="zoom">Zoom</option>
+                    <option value="rotate">Rotate</option>
+                    <option value="pan">Pan</option>
+                    <option value="fade">Fade</option>
+                </select>
+                <br><br>
+                <button type="submit">Apply Effect</button>
+                <br><br>
+            </form>
+
+        <form method="GET" action="{{ url_for('reset') }}">
+            <button type="submit" class="btn reset-btn">Upload New Image</button>
+        </form>
+    {% endif %}
+
     {% if result_gif %}
         <h2>Your animated GIF:</h2>
         <img src="{{url_for('send_output',filename=result_gif) }}" alt="Generated GIF">
