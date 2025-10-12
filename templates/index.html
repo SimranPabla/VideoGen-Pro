@@ -2,151 +2,270 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GifMagic MVP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoGen Pro</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             text-align: center;
-            padding: 30px;
-            background-color: #f5f5f5;
+            padding: 20px;
+            margin: 0;
+            background-color: #f4f7f6;
             scroll-behavior: smooth;
         }
-        input[type="file"], select, input[type="number"], button {
-            margin: 10px;
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            max-width: 1000px;
+            margin: 30px auto;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 1.25rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #edf2f7;
+            display: inline-block;
+        }
+        p {
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+        input[type="file"], select, input[type="number"], button, .btn {
+            margin: 10px 5px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            border: 1px solid #cbd5e0;
+            transition: all 0.3s ease;
         }
         .btn {
-            background-color: #86A3A3;
-            color: white;
-            padding: 8px 16px;
-            border: none;
+            display: inline-block;
             cursor: pointer;
-            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            background-color: #3182ce;
+            border-color: #3182ce;
         }
         .btn:hover {
-            background-color: #5b7c7c;
+            background-color: #2c5282;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
         }
-        img {
-            width: 200px;
-            max-height: 200px;
-            object-fit: contain;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            margin: 5px;
+        .btn-reset {
+            background-color: #e53e3e;
+            border-color: #e53e3e;
         }
-        audio {
-            margin-top: 10px;
+        .btn-reset:hover {
+            background-color: #c53030;
         }
-        .image-container {
+        input[type="file"] {
+            border: 2px dashed #a0aec0;
+            background-color: #edf2f7;
+            color: #4a5568;
+            padding: 15px;
+            width: calc(100% - 40px);
+            max-width: 300px;
+            display: block;
+            margin: 10px auto;
+        }
+        input[type="file"]:hover {
+            border-color: #3182ce;
+        }
+        .options {
+            padding: 20px 0;
+            border-top: 1px solid #edf2f7;
+            border-bottom: 1px solid #edf2f7;
+            margin-bottom: 20px;
+        }
+        .options label {
+            font-weight: 600;
+            color: #4a5568;
+            margin: 0 5px;
+        }
+        .options input[type="number"], .options select {
+            width: 80px;
+            text-align: center;
+        }
+        .content-section {
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            gap: 30px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        h1 {
-            color: #333;
-        }
-        h2, h3 {
-            margin: 10px;
-            color: #444;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 980px;
-            margin: auto;
-        }
-        video {
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            gap: 40px;
             margin-top: 20px;
+            flex-wrap: wrap;
+            padding: 20px 0;
+            border-top: 1px solid #edf2f7;
         }
-        p {
-            color: #333;
-            margin-top: 8px;
+        .card {
+            background-color: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            width: 45%;
+            min-width: 280px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            color: #2d3748;
+        }
+        img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border: 3px solid #ccc;
+            border-radius: 8px;
+            margin: 5px;
+            display: inline-block;
         }
         .transcription-box {
-            background-color: rgba(0,0,0,0.6);
+            background-color: #4a5568;
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 16px;
-            line-height: 1.4;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            line-height: 1.5;
             max-width: 100%;
+            text-align: left;
             word-wrap: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .options {
-            margin-top: 10px;
+        #video-section {
+            margin-top: 40px;
+            padding: 30px;
+            background-color: #f7fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
-        .options label {
-            margin: 0 6px 0 16px;
+        #video-section video {
+            max-width: 100%;
+            height: auto;
+            max-height: 480px;
+        }
+        #progress-container {
+            height: 15px;
+            border-radius: 7px;
+            overflow: hidden;
+            margin: 20px auto;
+            background-color: #e2e8f0;
+            max-width: 600px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.4s ease-in-out;
+            text-align: right;
+            line-height: 15px;
+            color: white;
+            font-size: 0.7rem;
+        }
+        .progress-error {
+            background: #e53e3e !important;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            .card {
+                width: 100%;
+                min-width: unset;
+            }
+            .options input[type="number"], .options select {
+                width: 60px;
+            }
+            .options label {
+                display: block;
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>GifMagic MVP</h1>
-        <p>Upload images and an audio file to create a zoom video with multi-word transcription boxes.</p>
+        
+        <h1>VideoGen Pro</h1>
+        <p>A simple tool to create zoom videos from images and an audio track.</p>
 
-        <!-- Step 1: Upload Images -->
+        <div id="progress-container" style="visibility: hidden;">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="progress-message" style="font-weight: 600; color: #4a5568; min-height: 1.5em;"></p>
+
+        {% if not uploaded_images %}
         <form method="POST" enctype="multipart/form-data">
-            {% if not uploaded_images %}
-                <h3>Step 1: Upload Images</h3>
-                <input type="file" name="images" accept="image/*" multiple required>
-                <button type="submit" class="btn">Upload Images</button>
-            {% endif %}
+            <h3>Step 1: Upload Images 🖼️</h3>
+            <p>Upload one or more images for your video content.</p>
+            <input type="file" name="images" accept="image/*" multiple required>
+            <button type="submit" class="btn">Upload Images</button>
         </form>
-
-        <!-- Step 2: Upload Audio -->
-        <form method="POST" enctype="multipart/form-data">
-            {% if uploaded_images and not uploaded_audio %}
-                <h3>Step 2: Upload Audio</h3>
-                <input type="file" name="audio" accept="audio/*" required>
-                <button type="submit" class="btn">Upload Audio & Transcribe</button>
-            {% endif %}
-        </form>
-
-        <!-- Step 3: Options -->
-        {% if uploaded_images and uploaded_audio %}
-            <form method="POST" class="options">
-                <h3>Step 3: Options</h3>
-                <label>Font Size:</label>
-                <input type="number" name="font_size" value="50" min="10" max="150">
-                <label>Words per Chunk:</label>
-                <input type="number" name="words_per_chunk" value="5" min="1" max="20">
-                <label>Text Position:</label>
-                <select name="text_position">
-                    <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
-                    <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
-                    <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
-                </select>
-                <br>
-                <button type="submit" name="effect" value="zoom" class="btn">Generate Zoom Video</button>
-                <a href="{{ url_for('reset') }}" class="btn" style="background-color:#a35b5b;">Reset</a>
-            </form>
         {% endif %}
 
-        <!-- Display uploaded images and audio -->
+        {% if uploaded_images and not uploaded_audio %}
+        <form method="POST" enctype="multipart/form-data">
+            <h3>Step 2: Upload Audio 🎤</h3>
+            <p>Upload an audio file to transcribe and sync captions.</p>
+            <input type="file" name="audio" accept="audio/*" required>
+            <button type="submit" class="btn">Upload Audio & Transcribe</button>
+        </form>
+        {% endif %}
+
+        {% if uploaded_images and uploaded_audio and not session.get('task_id') %}
+            <form method="POST" class="options">
+                <h3>Step 3: Customization & Generate ⚙️</h3>
+                <div style="margin-bottom: 15px;">
+                    <label>Font Size:</label>
+                    <input type="number" name="font_size" value="{{ request.form.get('font_size', 50) }}" min="10" max="150">
+                    <label>Words/Chunk:</label>
+                    <input type="number" name="words_per_chunk" value="{{ request.form.get('words_per_chunk', 5) }}" min="1" max="20">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label>Text Position:</label>
+                    <select name="text_position">
+                        <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
+                        <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
+                        <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
+                    </select>
+                    <label>Aspect Ratio:</label>
+                    <select name="aspect_ratio">
+                        <option value="16:9" {% if request.form.get('aspect_ratio') == '16:9' or not request.form.get('aspect_ratio') %}selected{% endif %}>16:9 (Landscape)</option>
+                        <option value="1:1" {% if request.form.get('aspect_ratio') == '1:1' %}selected{% endif %}>1:1 (Square)</option>
+                        <option value="9:16" {% if request.form.get('aspect_ratio') == '9:16' %}selected{% endif %}>9:16 (Portrait/Reels)</option>
+                    </select>
+                </div>
+                <button type="submit" name="effect" value="zoom" class="btn">🚀 Start Generation</button>
+                <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+            </form>
+        {% endif %}
+        
         {% if uploaded_images or uploaded_audio %}
-            <div class="image-container" id="result-section">
+            <div class="content-section" id="result-section">
                 {% if uploaded_images %}
-                    <div>
-                        <h2>Uploaded Images</h2>
-                        {% for img in uploaded_images %}
-                            <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Uploaded Image">
-                        {% endfor %}
+                    <div class="card">
+                        <h2>Uploaded Images ({{ uploaded_images|length }})</h2>
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                            {% for img in uploaded_images %}
+                                <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Image">
+                            {% endfor %}
+                        </div>
                     </div>
                 {% endif %}
 
                 {% if uploaded_audio %}
-                    <div>
+                    <div class="card">
                         <h2>Uploaded Audio</h2>
-                        <audio controls>
+                        <audio controls style="width: 100%; max-width: 300px;">
                             <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
                         </audio>
                         {% if transcription %}
@@ -154,33 +273,79 @@
                                 <b>Transcription:</b> {{ transcription }}
                             </div>
                         {% else %}
-                            <p><i>Transcribing...</i></p>
+                            <p style="color: #3182ce;"><i>Transcribing... please wait.</i></p>
                         {% endif %}
                     </div>
                 {% endif %}
             </div>
         {% endif %}
 
-        <!-- Display generated video -->
         {% if result_video %}
-            <div id="video-section" style="margin-top:40px;">
-                <h2>Generated Video</h2>
-                <video width="640" controls>
+            <div id="video-section">
+                <h2>✨ Generated Video is Ready!</h2>
+                <video width="640" controls autoplay>
                     <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
+                    Your browser does not support the video tag.
                 </video>
                 <p>
-                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">Download Video</a>
+                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">⬇️ Download Video</a>
                 </p>
             </div>
         {% endif %}
     </div>
 
-    {% if result_video %}
-        <script>
-            window.onload = () => {
-                document.getElementById("video-section").scrollIntoView({ behavior: "smooth" });
-            };
-        </script>
-    {% endif %}
+    <script>
+    // --- Consolidated Script Block ---
+    const taskId = "{{ session.get('task_id', '') }}";
+    const resultVideo = "{{ session.get('result_video', '') }}";
+    const progressStore = JSON.parse('{{ progress_store | tojson | safe }}');
+
+    if (taskId && !resultVideo && progressStore[taskId] !== 100) {
+        document.getElementById('progress-container').style.visibility = 'visible';
+        document.getElementById('progress-message').textContent = 'Video Generation in Progress...';
+        
+        const source = new EventSource(`/progress/${taskId}`);
+        
+        source.onmessage = function(event) {
+            let progress = parseInt(event.data);
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('progress-container');
+            const progressMessage = document.getElementById('progress-message');
+
+            if (progress >= 0 && progress <= 100) {
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+                progressContainer.classList.remove('progress-error');
+                
+                if (progress === 100) {
+                    progressMessage.textContent = 'Generation Complete. Redirecting...';
+                    source.close();
+                    window.location.href = `/complete_task/${taskId}`; 
+                }
+            } else if (progress === -1) {
+                progressMessage.textContent = 'Video Generation Failed. Please check server logs.';
+                progressBar.style.width = '100%';
+                progressBar.classList.add('progress-error');
+                progressBar.textContent = 'ERROR';
+                source.close();
+                window.location.href = `/complete_task/${taskId}`; 
+            }
+        };
+
+        source.onerror = function(err) {
+            console.error("EventSource failed:", err);
+            source.close();
+        };
+    }
+
+    window.onload = () => {
+        if (resultVideo) {
+            const videoSection = document.getElementById("video-section");
+            if (videoSection) {
+                videoSection.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+    };
+    </script>
 </body>
 </html>
