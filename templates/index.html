@@ -1,67 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>GifMagic MVP</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; scroll-behavior: smooth; }
-        input[type="file"] { margin: 20px; }
-        .btn { background-color: #86A3A3; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .btn:hover { background-color: #5b7c7c; }
-        img { width: 300px; border: 2px solid #ccc; border-radius: 10px; margin: 10px 0; }
-        .image-container { 
-            display: flex; 
-            justify-content: center; 
-            align-items: flex-start;  /* <-- Align top edges */
-            gap: 40px; 
-            margin-top: 30px; 
-        }
-        h3 { margin: 0 0 10px 0; }  /* <-- Reduce heading spacing */
-    </style>
-
+<meta charset="UTF-8">
+<title>GifMagic MVP</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 30px;
+  background-color: #f5f5f5;
+  scroll-behavior: smooth;
+}
+input[type="file"], select, button {
+  margin: 10px;
+}
+.btn {
+  background-color: #86A3A3;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.btn:hover {
+  background-color: #5b7c7c;
+}
+img {
+  width: 200px;
+  max-height: 200px;
+  object-fit: contain;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  margin: 5px;
+}
+audio {
+  margin-top: 10px;
+}
+.image-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+h1 {
+  color: #333;
+}
+h2 {
+  margin: 10px;
+  color: #444;
+}
+.container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: auto;
+}
+video {
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+p {
+  color: #333;
+}
+</style>
 </head>
 <body>
-    <h1>GifMagic MVP</h1>
-    <p>Upload an image to see it come alive as a short animated GIF!</p>
+<div class="container">
+  <h1>GifMagic MVP</h1>
+  <p>Upload images and an audio file to create a zoom GIF with word-by-word transcription.</p>
 
-    <form method="POST" enctype="multipart/form-data">
-        {% if not uploaded_image %}
-            <input type="file" name="image" accept="image/*" required>
-            <button type="submit" class="btn">Upload Image</button>
-        {% else %}
-            <select name="effect">
-                <option value="zoom">Zoom</option>
-                <option value="rotate">Rotate</option>
-                <option value="pan">Pan</option>
-                <option value="fade">Fade</option>
-            </select>
-            <button type="submit" class="btn">Apply Effect</button>
-            <a href="{{ url_for('reset') }}" class="btn" style="background-color: #ccc; color: black;">Reset</a>
-        {% endif %}
-    </form>
+  <!-- Upload Images -->
+  <form method="POST" enctype="multipart/form-data">
+      {% if not uploaded_images %}
+          <input type="file" name="images" accept="image/*" multiple required>
+          <button type="submit" class="btn">Upload Images</button>
+      {% endif %}
+  </form>
 
-    {% if uploaded_image %}
-    <div class="image-container" id="result-section">
-        <div>
-            <h3>Uploaded Image:</h3>
-            <img src="{{ url_for('send_uploaded', filename=uploaded_image) }}" alt="Uploaded Image">
-        </div>
-        {% if result_gif %}
-        <div>
-            <h3>Animated GIF:</h3>
-            <img src="{{ url_for('send_output', filename=result_gif) }}" alt="Generated GIF">
-            <p><a href="{{ url_for('send_output', filename=result_gif) }}" download>Download GIF</a></p>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
+  <!-- Upload Audio -->
+  <form method="POST" enctype="multipart/form-data">
+      {% if uploaded_images and not uploaded_audio %}
+          <input type="file" name="audio" accept="audio/*" required>
+          <button type="submit" class="btn">Upload Audio & Transcribe</button>
+      {% endif %}
+  </form>
 
-    {% if scroll_to %}
-    <script>
-        window.onload = () => {
-            document.getElementById("{{ scroll_to }}").scrollIntoView({ behavior: "smooth" });
-        };
-    </script>
-    {% endif %}
+  <!-- Generate Video -->
+  <form method="POST">
+      {% if uploaded_images and uploaded_audio %}
+          <button type="submit" name="effect" value="zoom" class="btn">Generate Word-by-Word GIF</button>
+          <a href="{{ url_for('reset') }}" class="btn" style="background-color:#a35b5b;">Reset</a>
+      {% endif %}
+  </form>
+
+  {% if uploaded_images or uploaded_audio %}
+  <div class="image-container" id="result-section">
+      {% if uploaded_images %}
+      <div>
+          <h2>Uploaded Images</h2>
+          {% for img in uploaded_images %}
+              <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Uploaded Image">
+          {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if uploaded_audio %}
+      <div>
+          <h2>Uploaded Audio</h2>
+          <audio controls>
+              <source src="{{ url_for('send_audio', filename=uploaded_audio) }}" type="audio/mpeg">
+          </audio>
+          {% if transcription %}
+              <p><b>Transcription:</b> {{ transcription }}</p>
+          {% else %}
+              <p><i>Transcribing...</i></p>
+          {% endif %}
+      </div>
+      {% endif %}
+  </div>
+  {% endif %}
+
+  {% if result_video %}
+  <div id="video-section" style="margin-top:40px;">
+      <h2>Generated Video</h2>
+      <video width="500" controls>
+          <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
+      </video>
+      <p><a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">Download Video</a></p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Auto-scroll to generated section -->
+{% if result_video %}
+<script>
+window.onload = () => {
+    document.getElementById("video-section").scrollIntoView({ behavior: "smooth" });
+};
+</script>
+{% endif %}
 </body>
 </html>
