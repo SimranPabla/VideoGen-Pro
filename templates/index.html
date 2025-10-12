@@ -1,147 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>GifMagic MVP</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 30px;
-  background-color: #f5f5f5;
-  scroll-behavior: smooth;
-}
-input[type="file"], select, button {
-  margin: 10px;
-}
-.btn {
-  background-color: #86A3A3;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
-}
-.btn:hover {
-  background-color: #5b7c7c;
-}
-img {
-  width: 200px;
-  max-height: 200px;
-  object-fit: contain;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  margin: 5px;
-}
-audio {
-  margin-top: 10px;
-}
-.image-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 30px;
-  margin-top: 30px;
-  flex-wrap: wrap;
-}
-h1 {
-  color: #333;
-}
-h2 {
-  margin: 10px;
-  color: #444;
-}
-.container {
-  background-color: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  max-width: 900px;
-  margin: auto;
-}
-video {
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-}
-p {
-  color: #333;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>GifMagic MVP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px;
+            background-color: #f5f5f5;
+            scroll-behavior: smooth;
+        }
+        input[type="file"], select, input[type="number"], button {
+            margin: 10px;
+        }
+        .btn {
+            background-color: #86A3A3;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .btn:hover {
+            background-color: #5b7c7c;
+        }
+        img {
+            width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            margin: 5px;
+        }
+        audio {
+            margin-top: 10px;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        h1 {
+            color: #333;
+        }
+        h2, h3 {
+            margin: 10px;
+            color: #444;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 980px;
+            margin: auto;
+        }
+        video {
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        p {
+            color: #333;
+            margin-top: 8px;
+        }
+        .transcription-box {
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 16px;
+            line-height: 1.4;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+        .options {
+            margin-top: 10px;
+        }
+        .options label {
+            margin: 0 6px 0 16px;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>GifMagic MVP</h1>
-  <p>Upload images and an audio file to create a zoom GIF with word-by-word transcription.</p>
+    <div class="container">
+        <h1>GifMagic MVP</h1>
+        <p>Upload images and an audio file to create a zoom video with multi-word transcription boxes.</p>
 
-  <!-- Upload Images -->
-  <form method="POST" enctype="multipart/form-data">
-      {% if not uploaded_images %}
-          <input type="file" name="images" accept="image/*" multiple required>
-          <button type="submit" class="btn">Upload Images</button>
-      {% endif %}
-  </form>
+        <!-- Step 1: Upload Images -->
+        <form method="POST" enctype="multipart/form-data">
+            {% if not uploaded_images %}
+                <h3>Step 1: Upload Images</h3>
+                <input type="file" name="images" accept="image/*" multiple required>
+                <button type="submit" class="btn">Upload Images</button>
+            {% endif %}
+        </form>
 
-  <!-- Upload Audio -->
-  <form method="POST" enctype="multipart/form-data">
-      {% if uploaded_images and not uploaded_audio %}
-          <input type="file" name="audio" accept="audio/*" required>
-          <button type="submit" class="btn">Upload Audio & Transcribe</button>
-      {% endif %}
-  </form>
+        <!-- Step 2: Upload Audio -->
+        <form method="POST" enctype="multipart/form-data">
+            {% if uploaded_images and not uploaded_audio %}
+                <h3>Step 2: Upload Audio</h3>
+                <input type="file" name="audio" accept="audio/*" required>
+                <button type="submit" class="btn">Upload Audio & Transcribe</button>
+            {% endif %}
+        </form>
 
-  <!-- Generate Video -->
-  <form method="POST">
-      {% if uploaded_images and uploaded_audio %}
-          <button type="submit" name="effect" value="zoom" class="btn">Generate Word-by-Word GIF</button>
-          <a href="{{ url_for('reset') }}" class="btn" style="background-color:#a35b5b;">Reset</a>
-      {% endif %}
-  </form>
+        <!-- Step 3: Options -->
+        {% if uploaded_images and uploaded_audio %}
+            <form method="POST" class="options">
+                <h3>Step 3: Options</h3>
+                <label>Font Size:</label>
+                <input type="number" name="font_size" value="50" min="10" max="150">
+                <label>Words per Chunk:</label>
+                <input type="number" name="words_per_chunk" value="5" min="1" max="20">
+                <label>Text Position:</label>
+                <select name="text_position">
+                    <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
+                    <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
+                    <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
+                </select>
+                <br>
+                <button type="submit" name="effect" value="zoom" class="btn">Generate Zoom Video</button>
+                <a href="{{ url_for('reset') }}" class="btn" style="background-color:#a35b5b;">Reset</a>
+            </form>
+        {% endif %}
 
-  {% if uploaded_images or uploaded_audio %}
-  <div class="image-container" id="result-section">
-      {% if uploaded_images %}
-      <div>
-          <h2>Uploaded Images</h2>
-          {% for img in uploaded_images %}
-              <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Uploaded Image">
-          {% endfor %}
-      </div>
-      {% endif %}
+        <!-- Display uploaded images and audio -->
+        {% if uploaded_images or uploaded_audio %}
+            <div class="image-container" id="result-section">
+                {% if uploaded_images %}
+                    <div>
+                        <h2>Uploaded Images</h2>
+                        {% for img in uploaded_images %}
+                            <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Uploaded Image">
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-      {% if uploaded_audio %}
-      <div>
-          <h2>Uploaded Audio</h2>
-          <audio controls>
-              <source src="{{ url_for('send_audio', filename=uploaded_audio) }}" type="audio/mpeg">
-          </audio>
-          {% if transcription %}
-              <p><b>Transcription:</b> {{ transcription }}</p>
-          {% else %}
-              <p><i>Transcribing...</i></p>
-          {% endif %}
-      </div>
-      {% endif %}
-  </div>
-  {% endif %}
+                {% if uploaded_audio %}
+                    <div>
+                        <h2>Uploaded Audio</h2>
+                        <audio controls>
+                            <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
+                        </audio>
+                        {% if transcription %}
+                            <div class="transcription-box">
+                                <b>Transcription:</b> {{ transcription }}
+                            </div>
+                        {% else %}
+                            <p><i>Transcribing...</i></p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
 
-  {% if result_video %}
-  <div id="video-section" style="margin-top:40px;">
-      <h2>Generated Video</h2>
-      <video width="500" controls>
-          <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
-      </video>
-      <p><a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">Download Video</a></p>
-  </div>
-  {% endif %}
-</div>
+        <!-- Display generated video -->
+        {% if result_video %}
+            <div id="video-section" style="margin-top:40px;">
+                <h2>Generated Video</h2>
+                <video width="640" controls>
+                    <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
+                </video>
+                <p>
+                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">Download Video</a>
+                </p>
+            </div>
+        {% endif %}
+    </div>
 
-<!-- Auto-scroll to generated section -->
-{% if result_video %}
-<script>
-window.onload = () => {
-    document.getElementById("video-section").scrollIntoView({ behavior: "smooth" });
-};
-</script>
-{% endif %}
+    {% if result_video %}
+        <script>
+            window.onload = () => {
+                document.getElementById("video-section").scrollIntoView({ behavior: "smooth" });
+            };
+        </script>
+    {% endif %}
 </body>
 </html>
