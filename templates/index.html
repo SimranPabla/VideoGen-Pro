@@ -24,7 +24,6 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
 .order-item.dragging{opacity:0.6}
 #imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:8px}
 #imageOrderList li{min-width:120px}
-.transcription-box{background:#111827;color:#fff;padding:12px;border-radius:8px;font-family:monospace;white-space:pre-wrap}
 
 /* Progress Bar */
 #progress-container{
@@ -55,18 +54,14 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
 </head>
 <body data-task-id="{{ task_id or '' }}">
 <div class="container">
-
-    
-    
     <h1>VideoGen Pro ✨</h1>
-    <p style="color:var(--color-text-secondary)">Upload images & audio, reorder images, and toggle captions before generating the video.</p>
+    <p style="color:var(--color-text-secondary)">Upload images & audio, reorder images, and generate your video.</p>
 
     <!-- Progress Bar (sticky top) -->
     <div id="progress-container">
         <div id="progress-bar">0%</div>
     </div>
     <p id="progress-message" style="font-weight:600;color:var(--color-text-secondary);min-height:1.2em"></p>
-
 
     <!-- Step 1: Upload Images -->
     <div class="card">
@@ -100,15 +95,15 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
         <h3>Step 2 — Upload Audio</h3>
         <form method="POST" enctype="multipart/form-data">
             <input type="file" name="audio" accept="audio/*" required>
-            <button class="btn" type="submit">Upload Audio & Transcribe</button>
+            <button class="btn" type="submit">Upload Audio</button>
         </form>
     </div>
     {% endif %}
 
-    <!-- Step 3: Customize & Generate -->
+    <!-- Step 3: Generate Video -->
     {% if uploaded_images and uploaded_audio %}
     <div class="card">
-        <h3>Step 3 — Customize & Generate</h3>
+        <h3>Step 3 — Generate Video</h3>
         <form method="POST" class="options">
             <div style="margin-bottom:10px">
                 <label>
@@ -116,22 +111,7 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
                     Enable Dynamic Zoom Effect
                 </label>
                 <label style="margin-left:16px">
-                    <input type="checkbox" name="show_captions" {% if video_settings.get('show_captions', True) %}checked{% endif %}>
-                    Show Captions
-                </label>
-            </div>
-
-            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-                <label>Font Size: <input type="number" name="font_size" value="{{ video_settings.get('font_size', 50) }}" min="10" max="150"></label>
-                <label>Words/Chunk: <input type="number" name="words_per_chunk" value="{{ video_settings.get('words_per_chunk', 5) }}" min="1" max="40"></label>
-                <label>Text Position:
-                    <select name="text_position">
-                        <option value="bottom" {% if video_settings.get('text_position', 'bottom')=='bottom' %}selected{% endif %}>Bottom</option>
-                        <option value="center" {% if video_settings.get('text_position')=='center' %}selected{% endif %}>Center</option>
-                        <option value="top" {% if video_settings.get('text_position')=='top' %}selected{% endif %}>Top</option>
-                    </select>
-                </label>
-                <label>Aspect Ratio:
+                    Aspect Ratio:
                     <select name="aspect_ratio">
                         <option value="16:9" {% if video_settings.get('aspect_ratio','16:9')=='16:9' %}selected{% endif %}>16:9</option>
                         <option value="1:1" {% if video_settings.get('aspect_ratio')=='1:1' %}selected{% endif %}>1:1</option>
@@ -152,10 +132,10 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
     </div>
     {% endif %}
 
-    <!-- Upload Previews & Transcription -->
+    <!-- Uploaded Images & Audio Preview -->
     {% if uploaded_images or uploaded_audio %}
     <div class="card">
-        <h3>Uploads & Transcription</h3>
+        <h3>Uploads</h3>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
             {% if uploaded_images %}
             <div>
@@ -174,9 +154,6 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
                     <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
                     Your browser does not support the audio element.
                 </audio>
-                {% if transcription %}
-                <div class="transcription-box" style="margin-top:12px">{{ transcription }}</div>
-                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -204,7 +181,6 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
 const imageOrderList = document.getElementById('imageOrderList');
 if (imageOrderList) new Sortable(imageOrderList,{animation:150,ghostClass:'dragging'});
 
-// Append hidden inputs before submit
 document.querySelectorAll('form.options').forEach(formEl=>{
     formEl.addEventListener('submit',e=>{
         const container=document.getElementById('imageOrderHiddenInputs');
@@ -221,7 +197,6 @@ document.querySelectorAll('form.options').forEach(formEl=>{
     });
 });
 
-// Regenerate
 const regenerateBtn=document.getElementById('regenerateBtn');
 if(regenerateBtn){
     regenerateBtn.addEventListener('click',()=>{
@@ -244,7 +219,6 @@ if(regenerateBtn){
     });
 }
 
-// Monitor SSE progress
 function monitorProgress(taskId){
     document.getElementById('progress-container').style.visibility='visible';
     const progressBar = document.getElementById('progress-bar');
@@ -299,7 +273,6 @@ function monitorProgress(taskId){
     source.onerror=function(err){console.error(err); source.close();}
 }
 
-// Auto-start monitoring if a task is in progress
 window.addEventListener('load', () => {
     const TASK_ID = document.body.dataset.taskId || null;
     if (TASK_ID) {
