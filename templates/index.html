@@ -90,10 +90,47 @@
             font-weight: 600;
             color: #4a5568;
             margin: 0 5px;
-        }
-        .options input[type="number"], .options select {
-            width: 80px;
+            /* Added text-align center to labels */
             text-align: center;
+            display: inline-block; /* Ensure it respects text-align */
+        }
+        .options input[type="number"] {
+            width: 80px; 
+            text-align: center;
+        }
+        /* Increased width for Text Position dropdown */
+        .options select[name="text_position"] {
+            width: 140px; 
+            text-align: center;
+        }
+        /* Increased width for Aspect Ratio dropdown */
+        .options select[name="aspect_ratio"] {
+            width: 180px; /* Increased size significantly */
+            text-align: center;
+        }
+        .options > div {
+            /* Added text-align center to contain the options correctly */
+            text-align: center;
+        }
+
+        .checkbox-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            border: 1px solid #cbd5e0;
+            vertical-align: middle;
+        }
+        .checkbox-group label {
+            margin: 0;
+            font-weight: 600;
+            color: #2d3748;
         }
         .content-section {
             display: flex;
@@ -182,8 +219,14 @@
                 width: 100%;
                 min-width: unset;
             }
-            .options input[type="number"], .options select {
+            .options input[type="number"] {
                 width: 60px;
+            }
+            .options select[name="text_position"] {
+                width: 100px;
+            }
+            .options select[name="aspect_ratio"] {
+                width: 140px;
             }
             .options label {
                 display: block;
@@ -224,6 +267,10 @@
         {% if uploaded_images and uploaded_audio and not session.get('task_id') %}
             <form method="POST" class="options">
                 <h3>Step 3: Customization & Generate ⚙️</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="zoom_effect" name="zoom_effect" value="on" checked>
+                    <label for="zoom_effect">Use Zoom Effect 🔍</label>
+                </div>
                 <div style="margin-bottom: 15px;">
                     <label>Font Size:</label>
                     <input type="number" name="font_size" value="{{ request.form.get('font_size', 50) }}" min="10" max="150">
@@ -244,7 +291,7 @@
                         <option value="9:16" {% if request.form.get('aspect_ratio') == '9:16' %}selected{% endif %}>9:16 (Portrait/Reels)</option>
                     </select>
                 </div>
-                <button type="submit" name="effect" value="zoom" class="btn">🚀 Start Generation</button>
+                <button type="submit" name="generate" value="video" class="btn">🚀 Start Generation</button>
                 <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
             </form>
         {% endif %}

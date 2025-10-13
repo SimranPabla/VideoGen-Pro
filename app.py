@@ -59,7 +59,7 @@ ASPECT_RATIOS = {
     "9:16": (1080, 1920)
 }
 
-# --- Core Video Functions (Kept to minimum, logic unchanged) ---
+# --- Core Video Functions (Updated for Zoom/Static) ---
 
 def create_static_overlay_clip(segment_text, font_size=50, text_position="bottom", canvas_size=(1920,1080), max_width=1720, duration=1.0):
     # (Implementation remains the same as it's complex and functional)
@@ -132,7 +132,11 @@ def create_static_overlay_clip(segment_text, font_size=50, text_position="bottom
     clip = ImageClip(overlay_array).set_duration(duration)
     return clip
 
-def create_zoom_clip(img_path, duration, aspect_ratio="16:9", zoom_start=1.0, zoom_end=1.15):
+def create_image_base_clip(img_path, duration, aspect_ratio="16:9", zoom_start=1.0, zoom_end=1.15, use_zoom=True):
+    """
+    Creates the base ImageClip, applying padding and optional zoom effect.
+    This replaces the original create_zoom_clip.
+    """
     frame_w, frame_h = ASPECT_RATIOS.get(aspect_ratio, (1920, 1080))
     
     img = Image.open(img_path).convert("RGB")
@@ -140,6 +144,7 @@ def create_zoom_clip(img_path, duration, aspect_ratio="16:9", zoom_start=1.0, zo
     target_ratio = frame_w / frame_h
     img_ratio = img_w / img_h
 
+    # Calculate padding/resizing to fit within the aspect ratio
     if img_ratio > target_ratio:
         new_w = frame_w
         new_h = int(frame_w / img_ratio)
@@ -149,6 +154,7 @@ def create_zoom_clip(img_path, duration, aspect_ratio="16:9", zoom_start=1.0, zo
 
     img_resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
+    # Apply padding/background
     bg = Image.new("RGB", (frame_w, frame_h), (255, 255, 255))
     x_offset = (frame_w - new_w) // 2
     y_offset = (frame_h - new_h) // 2
@@ -158,33 +164,38 @@ def create_zoom_clip(img_path, duration, aspect_ratio="16:9", zoom_start=1.0, zo
     bg.save(padded_path)
 
     clip = ImageClip(padded_path).set_duration(duration)
-    clip = clip.resize(lambda t: zoom_start + (zoom_end - zoom_start) * (t / duration))
+    
+    if use_zoom:
+        clip = clip.resize(lambda t: zoom_start + (zoom_end - zoom_start) * (t / duration))
+    
     clip = clip.set_position('center')
     os.remove(padded_path) 
     return clip
 
 def create_segment_file_wrapper(args):
     """Wrapper for multiprocessing Pool."""
-    index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio = args
-    return create_segment_file(index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio)
+    # Added 'use_zoom' to the arguments tuple
+    index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio, use_zoom = args
+    return create_segment_file(index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio, use_zoom)
 
-def create_segment_file(index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio="16:9"):
+def create_segment_file(index, img_path, segment_words, segment_times, font_size, text_position, tmp_dir, fps, aspect_ratio="16:9", use_zoom=True):
     """Create a single video segment."""
     seg_filename = os.path.join(tmp_dir, f"segment_{index:06d}.mp4")
     seg_duration = segment_times[-1][1] 
     segment_text = " ".join(segment_words)
     frame_w, frame_h = ASPECT_RATIOS.get(aspect_ratio, (1920, 1080))
 
-    zoom_clip = create_zoom_clip(img_path, seg_duration, aspect_ratio)
+    # Determine if we use the zoom effect or a static image
+    base_clip = create_image_base_clip(img_path, seg_duration, aspect_ratio, use_zoom=use_zoom)
     static_overlay_clip = create_static_overlay_clip(segment_text, font_size=font_size, text_position=text_position, canvas_size=(frame_w, frame_h), duration=seg_duration).set_position("center")
 
-    segment_clip = CompositeVideoClip([zoom_clip, static_overlay_clip], size=(zoom_clip.w, zoom_clip.h)).set_duration(seg_duration)
+    segment_clip = CompositeVideoClip([base_clip, static_overlay_clip], size=(base_clip.w, base_clip.h)).set_duration(seg_duration)
 
     segment_clip.write_videofile(
         seg_filename, fps=fps, codec=FFMPEG_CODEC, audio=False, threads=1, preset="medium", logger=None, ffmpeg_params=["-pix_fmt", "yuv420p"]
     )
 
-    for clip in [segment_clip, zoom_clip, static_overlay_clip]:
+    for clip in [segment_clip, base_clip, static_overlay_clip]:
         try:
             clip.close()
         except:
@@ -214,12 +225,12 @@ def concat_segments_copy_video(segment_paths, audio_path, output_path, task_id=N
     os.remove(list_file)
     if task_id: progress_store[task_id] = 95
 
-# --- Main Background Task Runner ---
+# --- Main Background Task Runner (Updated signature) ---
 
 def video_generation_task(
         image_paths, transcription, audio_path, output_path,
         font_size, text_position, fps, segments,
-        aspect_ratio, words_per_chunk, task_id, output_filename):
+        aspect_ratio, words_per_chunk, task_id, output_filename, use_zoom): # Added use_zoom
     
     try:
         audio_clip = AudioFileClip(audio_path)
@@ -262,7 +273,8 @@ def video_generation_task(
         pool_args = []
 
         for i, seg in enumerate(caption_segments):
-            pool_args.append((i, image_for_segment[i], seg["words"], seg["word_times"], font_size, text_position, tmp_dir, fps, aspect_ratio))
+            # Added use_zoom here:
+            pool_args.append((i, image_for_segment[i], seg["words"], seg["word_times"], font_size, text_position, tmp_dir, fps, aspect_ratio, use_zoom))
 
         # --- Segment generation (Parallel) ---
         MAX_SEGMENT_PROGRESS = 80
@@ -290,7 +302,7 @@ def video_generation_task(
         progress_store[f"error_{task_id}"] = str(e)
 
 
-# --- Flask routes ---
+# --- Flask routes (Updated index route) ---
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -323,7 +335,7 @@ def index():
                 file.save(audio_path)
 
                 trans_task_id = str(uuid.uuid4())
-                session['task_id'] = trans_task_id # Use task_id for transcription status too
+                session['task_id'] = trans_task_id 
                 progress_store[trans_task_id] = 5
                 
                 try:
@@ -341,16 +353,19 @@ def index():
                     session['transcription'] = "Error: Transcription failed."
 
                 session.pop('result_video', None) 
-                session.pop('task_id', None) # Clear task_id immediately after synchronous transcription
+                session.pop('task_id', None) 
                 return redirect(url_for('index'))
 
-        # 3. Generate Video
-        if 'effect' in request.form and uploaded_images and uploaded_audio and transcription:
+        # 3. Generate Video (Checking for 'generate' which is the new button name)
+        if 'generate' in request.form and uploaded_images and uploaded_audio and transcription:
             
             # Prevent re-submitting if a task is already running/pending completion
             if task_id and progress_store.get(task_id, 100) < 100:
                 return redirect(url_for('index'))
 
+            # --- NEW LOGIC: Check for zoom effect ---
+            use_zoom = 'zoom_effect' in request.form
+            
             font_size = int(request.form.get('font_size', 50))
             text_position = request.form.get('text_position', 'bottom')
             user_aspect_ratio = request.form.get("aspect_ratio", "16:9") 
@@ -358,7 +373,7 @@ def index():
 
             image_paths = [os.path.join(UPLOAD_FOLDER, img) for img in uploaded_images]
             audio_path = os.path.join(AUDIO_FOLDER, uploaded_audio)
-            output_filename = f"zoom_video_{uuid.uuid4().hex[:6]}.mp4"
+            output_filename = f"video_{'zoom' if use_zoom else 'static'}_{uuid.uuid4().hex[:6]}.mp4"
             output_path = os.path.join(OUTPUT_FOLDER, output_filename)
             
             task_id = str(uuid.uuid4())
@@ -370,7 +385,8 @@ def index():
                 args=(
                     image_paths, transcription, audio_path, output_path,
                     font_size, text_position, 60, segments, 
-                    user_aspect_ratio, words_per_chunk, task_id, output_filename
+                    user_aspect_ratio, words_per_chunk, task_id, output_filename, 
+                    use_zoom # Passed the new flag
                 )
             )
             video_thread.start()
@@ -384,7 +400,7 @@ def index():
         uploaded_audio=uploaded_audio,
         transcription=transcription,
         result_video=result_video,
-        task_id=task_id, # Pass task_id for client-side progress tracking
+        task_id=task_id, 
         progress_store=progress_store
     )
 
