@@ -18,12 +18,10 @@ h1{margin:0 0 8px;color:var(--color-text-main)}
 input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;border:2px dashed #dbeafe;background:#fbfdff}
 .btn{background:var(--color-primary);color:#fff;padding:10px 16px;border-radius:8px;border:none;cursor:pointer}
 .btn-reset{background:#ef4444}
-.image-preview-group{display:flex;flex-wrap:wrap;gap:10px}
-.image-thumb{width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid #e6f0ff;display:block}
-.order-item{display:flex;align-items:center;gap:8px;padding:6px;background:#fff;border-radius:8px;border:1px solid #eef6ff;cursor:grab}
+#imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:16px}
+#imageOrderList li{min-width:120px;display:flex;flex-direction:column;align-items:center;cursor:grab;padding:8px;background:#fff;border-radius:8px;border:1px solid #eef6ff}
 .order-item.dragging{opacity:0.6}
-#imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:8px}
-#imageOrderList li{min-width:120px}
+.image-thumb{width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #e6f0ff;display:block;margin-bottom:6px;text-align:center}
 
 /* Progress Bar */
 #progress-container{
@@ -64,30 +62,36 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
     <p id="progress-message" style="font-weight:600;color:var(--color-text-secondary);min-height:1.2em"></p>
 
     <!-- Step 1: Upload Images -->
-    <div class="card">
-        <h3>Step 1 — Upload Images</h3>
-        {% if not uploaded_images %}
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="images" accept="image/*" multiple required>
-            <button class="btn" type="submit">Upload Images</button>
-        </form>
-        {% else %}
-        <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
-        <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
-        <h4>Reorder Images (drag & drop)</h4>
-        <ul id="imageOrderList">
-            {% for img in uploaded_images %}
-            <li class="order-item" data-filename="{{ img }}">
-                <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
-                <div style="flex:1;text-align:left">
-                    <div style="font-weight:600">{{ img }}</div>
-                    <div style="font-size:12px;color:var(--color-text-secondary)">Drag to reorder</div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-    </div>
+    <!-- Step 1 — Upload Images -->
+<div class="card">
+    <h3>Step 1 — Upload Images</h3>
+    {% if not uploaded_images %}
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="images" accept="image/*" multiple required>
+        <button class="btn" type="submit">Upload Images</button>
+    </form>
+    {% else %}
+    <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
+
+    <!-- Add More Images Form -->
+    <form method="POST" enctype="multipart/form-data" style="margin-bottom:12px;">
+        <input type="file" name="images" accept="image/*" multiple required>
+        <button class="btn" type="submit">➕ Add More Images</button>
+    </form>
+
+    <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+
+    <h4>Reorder Images (drag & drop)</h4>
+    <ul id="imageOrderList">
+        {% for img in uploaded_images %}
+        <li class="order-item" data-filename="{{ img }}">
+            <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
+            <div style="text-align:center;font-size:12px;margin-top:4px">{{ img }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
 
     <!-- Step 2: Upload Audio -->
     {% if uploaded_images and not uploaded_audio %}
@@ -132,31 +136,13 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
     </div>
     {% endif %}
 
-    <!-- Uploaded Images & Audio Preview -->
-    {% if uploaded_images or uploaded_audio %}
+    <!-- Audio Transcript -->
+    {% if uploaded_audio %}
     <div class="card">
-        <h3>Uploads</h3>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-            {% if uploaded_images %}
-            <div>
-                <h4>Images</h4>
-                <div class="image-preview-group">
-                    {% for img in uploaded_images %}
-                    <img src="{{ url_for('send_uploaded', filename=img) }}" class="image-thumb" alt="img">
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            {% if uploaded_audio %}
-            <div>
-                <h4>Audio</h4>
-                <audio controls style="width:100%;max-width:360px">
-                    <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
-                    Your browser does not support the audio element.
-                </audio>
-            </div>
-            {% endif %}
-        </div>
+        <h3>🎤 Audio Transcript</h3>
+        <pre style="white-space:pre-wrap;word-wrap:break-word;color:var(--color-text-main);background:#f0f4f8;padding:12px;border-radius:8px;border:1px solid #eef6ff;">
+            {{ audio_transcript or "Transcription will appear here..." }}
+        </pre>
     </div>
     {% endif %}
 
@@ -164,9 +150,6 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
     <div class="card" id="video-section" {% if not result_video %}style="display:none"{% endif %}>
         <h3>🎬 Generated Video</h3>
         <video id="resultVideo" width="640" controls autoplay loop>
-            {% if result_video %}
-            <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
-            {% endif %}
         </video>
         <p>
             {% if result_video %}
@@ -196,28 +179,6 @@ document.querySelectorAll('form.options').forEach(formEl=>{
         }
     });
 });
-
-const regenerateBtn=document.getElementById('regenerateBtn');
-if(regenerateBtn){
-    regenerateBtn.addEventListener('click',()=>{
-        const form=document.querySelector('form.options');
-        const container=document.getElementById('imageOrderHiddenInputs');
-        container.innerHTML='';
-        imageOrderList.querySelectorAll('li').forEach(item=>{
-            const input=document.createElement('input');
-            input.type='hidden';
-            input.name='image_order[]';
-            input.value=item.getAttribute('data-filename');
-            container.appendChild(input);
-        });
-        const regenInput=form.querySelector('input[name="regenerate"]')||(()=>{const inp=document.createElement('input'); inp.type='hidden'; inp.name='regenerate'; inp.value='1'; form.appendChild(inp); return inp})();
-        const formData=new FormData(form);
-        fetch(window.location.href,{method:'POST',body:formData})
-        .then(resp=>resp.json())
-        .then(data=>{if(data.task_id) monitorProgress(data.task_id)})
-        .catch(err=>console.error(err));
-    });
-}
 
 function monitorProgress(taskId){
     document.getElementById('progress-container').style.visibility='visible';

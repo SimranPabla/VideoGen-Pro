@@ -4,11 +4,11 @@ from werkzeug.utils import secure_filename
 from datetime import timedelta
 import whisper
 import torch
-from moviepy.video.fx.resize import resize
 from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, ColorClip, concatenate_videoclips
 import shutil
 import uuid
 import time
+from moviepy.video.fx.resize import resize
 from threading import Thread
 from multiprocessing import cpu_count
 
@@ -42,6 +42,8 @@ ASPECT_RATIOS = {
     "1:1": (1080, 1080),
     "9:16": (1080, 1920)
 }
+
+# --- Video Generation ---
 def fast_video_generation(image_paths, audio_path, output_path, aspect_ratio="16:9", use_zoom=False, task_id=None):
     try:
         audio_clip = AudioFileClip(audio_path)
@@ -54,7 +56,7 @@ def fast_video_generation(image_paths, audio_path, output_path, aspect_ratio="16
 
         for i, img_path in enumerate(image_paths):
             if task_id and progress_store.get(task_id) == -1:
-                return  # Stop if task was cancelled
+                return  # Stop if cancelled
             img_clip = ImageClip(img_path)
             img_w, img_h = img_clip.size
             scale = min(frame_w/img_w, frame_h/img_h)
@@ -83,6 +85,14 @@ def fast_video_generation(image_paths, audio_path, output_path, aspect_ratio="16
             progress_store[task_id] = -1
             progress_store[f"error_{task_id}"] = str(e)
 
+# --- Audio Transcription ---
+def transcribe_audio(audio_path):
+    try:
+        result = model.transcribe(audio_path)
+        return result.get("text", "")
+    except Exception as e:
+        return f"Error transcribing audio: {str(e)}"
+
 # --- Flask Routes ---
 @app.route('/', methods=['GET','POST'])
 def index():
@@ -95,14 +105,13 @@ def index():
         # Upload images
         if 'images' in request.files:
             files = request.files.getlist('images')
-            new_files = []
+            uploaded_images = session.get('uploaded_images', [])
             for f in files:
                 if f and f.filename != '':
                     filename = secure_filename(f.filename)
                     f.save(os.path.join(UPLOAD_FOLDER, filename))
-                    new_files.append(filename)
-            if new_files:
-                session['uploaded_images'] = new_files
+                    uploaded_images.append(filename)  # Append instead of replacing
+            session['uploaded_images'] = uploaded_images
             session.pop('result_video', None)
             session.pop('task_id', None)
             return redirect(url_for('index'))
@@ -115,6 +124,13 @@ def index():
                 audio_path = os.path.join(AUDIO_FOLDER, filename)
                 file.save(audio_path)
                 session['uploaded_audio'] = filename
+
+                # Generate transcript in background
+                def transcribe_and_store():
+                    transcript = transcribe_audio(audio_path)
+                    session['audio_transcript'] = transcript
+                Thread(target=transcribe_and_store).start()
+
                 return redirect(url_for('index'))
 
         # Generate video
@@ -136,7 +152,6 @@ def index():
             session['task_id'] = task_id
             progress_store[task_id] = 0
 
-            # Start background thread
             Thread(target=fast_video_generation, args=(
                 image_paths, audio_path, output_path,
                 video_settings['aspect_ratio'], video_settings['use_zoom'], task_id
@@ -151,9 +166,11 @@ def index():
         result_video=result_video,
         task_id=task_id,
         progress_store=progress_store,
-        video_settings=session.get('video_settings', {})
+        video_settings=session.get('video_settings', {}),
+        audio_transcript=session.get('audio_transcript', "Transcript will appear here after processing.")
     )
 
+# --- Static Files ---
 @app.route('/uploads/<filename>')
 def send_uploaded(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
@@ -166,6 +183,7 @@ def send_output(filename):
 def send_audio(filename):
     return send_from_directory(AUDIO_FOLDER, filename)
 
+# --- Reset ---
 @app.route('/reset')
 def reset():
     task_id = session.get('task_id')
@@ -185,6 +203,7 @@ def reset():
     session.clear()
     return redirect(url_for('index'))
 
+# --- Progress ---
 @app.route('/progress/<task_id>')
 def progress(task_id):
     def event_stream():
@@ -199,6 +218,7 @@ def progress(task_id):
         yield f"data: {progress_store.get(task_id,100)}\n\n"
     return Response(stream_with_context(event_stream()), mimetype='text/event-stream')
 
+# --- Complete Task ---
 @app.route('/complete_task/<task_id>')
 def complete_task(task_id):
     result_filename = progress_store.get(f"result_{task_id}")
