@@ -1,530 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VideoGen Pro ✨</title>
-    <style>
-        /* CSS Variables for Theme */
-        :root {
-            --color-primary: #3b82f6; /* A slightly warmer blue */
-            --color-primary-dark: #2563eb;
-            --color-background-light: #f7f9fc; /* Lighter background */
-            --color-background-card: #ffffff;
-            --color-text-main: #1f2937;
-            --color-text-secondary: #4b5563;
-            --color-border-light: #e5e7eb;
-            --color-success: #10b981;
-            --color-error: #ef4444;
-            --spacing-unit: 8px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VideoGen Pro ✨</title>
+<style>
+:root{
+    --color-primary:#3b82f6;
+    --color-primary-dark:#2563eb;
+    --color-text-main:#1f2937;
+    --color-text-secondary:#4b5563;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f7f9fc;padding:24px;margin:0}
+.container{max-width:1100px;margin:24px auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.06);border:1px solid #e6eef9;position:relative}
+h1{margin:0 0 8px;color:var(--color-text-main)}
+.card{background:#f9fbfd;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #eef6ff}
+input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;border:2px dashed #dbeafe;background:#fbfdff}
+.btn{background:var(--color-primary);color:#fff;padding:10px 16px;border-radius:8px;border:none;cursor:pointer}
+.btn-reset{background:#ef4444}
+.image-preview-group{display:flex;flex-wrap:wrap;gap:10px}
+.image-thumb{width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid #e6f0ff;display:block}
+.order-item{display:flex;align-items:center;gap:8px;padding:6px;background:#fff;border-radius:8px;border:1px solid #eef6ff;cursor:grab}
+.order-item.dragging{opacity:0.6}
+#imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:8px}
+#imageOrderList li{min-width:120px}
+.transcription-box{background:#111827;color:#fff;padding:12px;border-radius:8px;font-family:monospace;white-space:pre-wrap}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            text-align: center;
-            padding: calc(4 * var(--spacing-unit));
-            margin: 0;
-            background-color: var(--color-background-light);
-            scroll-behavior: smooth;
-        }
+/* Progress Bar */
+#progress-container{
+    height:24px;
+    border-radius:12px;
+    overflow:hidden;
+    background:#e2e8f0;
+    margin-bottom:16px;
+    visibility:hidden;
+    position:sticky;
+    top:0;
+    z-index:999;
+}
+#progress-bar{
+    height:100%;
+    background:linear-gradient(90deg,#10b981,#059669);
+    width:0;
+    text-align:right;
+    padding-right:8px;
+    color:#fff;
+    font-weight:700;
+    line-height:24px;
+}
+.progress-error{background:#ef4444 !important}
 
-        .container {
-            background-color: var(--color-background-card);
-            padding: calc(5 * var(--spacing-unit));
-            border-radius: 16px;
-            /* Slightly softer, modern shadow */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.05);
-            max-width: 1100px;
-            margin: calc(4 * var(--spacing-unit)) auto;
-            border: 1px solid var(--color-border-light);
-        }
-
-        h1 {
-            color: var(--color-text-main);
-            font-size: 2.5rem;
-            margin-bottom: var(--spacing-unit);
-            font-weight: 800; /* Bolder for impact */
-        }
-
-        h3 {
-            color: var(--color-primary);
-            font-size: 1.35rem;
-            margin-top: calc(4 * var(--spacing-unit));
-            margin-bottom: calc(2 * var(--spacing-unit));
-            padding-bottom: var(--spacing-unit);
-            border-bottom: 2px solid var(--color-border-light);
-            display: inline-block;
-            font-weight: 700;
-        }
-
-        p {
-            color: var(--color-text-secondary);
-            margin-bottom: calc(3 * var(--spacing-unit));
-            line-height: 1.6;
-        }
-
-        input[type="file"], select, input[type="number"], button, .btn {
-            margin: var(--spacing-unit) 5px;
-            padding: calc(1.5 * var(--spacing-unit)) calc(3 * var(--spacing-unit));
-            border-radius: 10px; /* More rounded */
-            font-size: 1rem;
-            border: 1px solid var(--color-border-light);
-            transition: all 0.3s ease;
-            box-sizing: border-box; /* Crucial for consistent sizing */
-        }
-
-        /* Focus state for inputs/selects */
-        input:focus, select:focus, button:focus {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Subtle blue glow */
-            outline: none;
-        }
-
-        .btn {
-            display: inline-block;
-            cursor: pointer;
-            text-decoration: none;
-            color: white;
-            background-color: var(--color-primary);
-            border-color: var(--color-primary);
-            font-weight: 600;
-            transform: translateY(0); /* For the subtle press effect */
-        }
-
-        .btn:hover {
-            background-color: var(--color-primary-dark);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-
-        /* Subtle press effect on click */
-        .btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-reset {
-            background-color: var(--color-error);
-            border-color: var(--color-error);
-        }
-
-        .btn-reset:hover {
-            background-color: #b91c1c;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-
-        input[type="file"] {
-            border: 2px dashed #a0aec0;
-            background-color: #f3f4f6;
-            color: var(--color-text-secondary);
-            padding: calc(2 * var(--spacing-unit));
-            width: calc(100% - 40px);
-            max-width: 350px;
-            display: block;
-            margin: calc(2 * var(--spacing-unit)) auto;
-            border-radius: 12px;
-        }
-
-        input[type="file"]:hover {
-            border-color: var(--color-primary);
-            background-color: #e5e7eb;
-        }
-
-        .options {
-            padding: calc(3 * var(--spacing-unit)) 0;
-            border-top: 1px solid var(--color-border-light);
-            border-bottom: 1px solid var(--color-border-light);
-            margin-bottom: calc(4 * var(--spacing-unit));
-        }
-
-        .options label {
-            font-weight: 600;
-            color: var(--color-text-secondary);
-            margin: 0 10px; /* Increased margin for separation */
-            display: inline-block;
-        }
-        
-        /* Consistent sizing for inputs in options */
-        .options input[type="number"], .options select {
-            padding: var(--spacing-unit) calc(1.5 * var(--spacing-unit));
-            border-radius: 6px;
-            font-size: 0.95rem;
-        }
-
-        .options input[type="number"] {
-            width: 70px; 
-            text-align: center;
-        }
-
-        .options select[name="text_position"] {
-            width: 140px; 
-        }
-
-        .options select[name="aspect_ratio"] {
-            width: 180px; 
-        }
-        
-        .option-group { /* New class for better grouping in the options form */
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px; /* Space between groups of options */
-            margin-bottom: 15px;
-        }
-        
-        .option-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: calc(3 * var(--spacing-unit));
-            gap: 10px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin: 0;
-            border: 1px solid #cbd5e0;
-            vertical-align: middle;
-            accent-color: var(--color-primary); /* Style for the checkbox itself */
-            border-radius: 4px;
-        }
-
-        .checkbox-group label {
-            margin: 0;
-            font-weight: 600;
-            color: var(--color-text-main);
-            cursor: pointer;
-        }
-
-        .content-section {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: calc(5 * var(--spacing-unit));
-            margin-top: calc(4 * var(--spacing-unit));
-            flex-wrap: wrap;
-            padding: calc(3 * var(--spacing-unit)) 0;
-            border-top: 1px solid var(--color-border-light);
-        }
-
-        .card {
-            background-color: #f9fbfd; /* Slightly different background */
-            border-radius: 12px;
-            padding: calc(3 * var(--spacing-unit));
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            width: 48%; /* Slightly adjusted width for better use of space */
-            min-width: 320px;
-            margin-bottom: calc(3 * var(--spacing-unit));
-            border: 1px solid #f3f4f6;
-        }
-
-        .card h2 {
-            font-size: 1.25rem;
-            margin-top: 0;
-            margin-bottom: calc(2 * var(--spacing-unit));
-            color: var(--color-text-main);
-            font-weight: 700;
-        }
-        
-        .image-preview-group {
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 10px; /* Added gap between images */
-        }
-
-        .image-preview-group img {
-            width: 80px; /* Slightly smaller for a tighter grid */
-            height: 80px;
-            object-fit: cover;
-            border: 2px solid var(--color-primary);
-            border-radius: 8px;
-            margin: 0;
-            display: inline-block;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .transcription-box {
-            background-color: var(--color-text-main); /* Dark background for transcription */
-            color: white;
-            padding: calc(2 * var(--spacing-unit));
-            border-radius: 10px;
-            margin-top: calc(2 * var(--spacing-unit));
-            font-size: 0.9rem;
-            line-height: 1.6;
-            max-width: 100%;
-            text-align: left;
-            word-wrap: break-word;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            font-family: monospace; /* Monospace font for code-like text */
-        }
-        
-        .transcription-box b {
-            color: var(--color-success); /* Highlighting the label */
-        }
-
-        #video-section {
-            margin-top: calc(5 * var(--spacing-unit));
-            padding: calc(4 * var(--spacing-unit));
-            background-color: #f7fafc;
-            border-radius: 16px;
-            border: 2px solid var(--color-primary); /* Primary color border for emphasis */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        #video-section video {
-            max-width: 100%;
-            height: auto;
-            max-height: 540px;
-            border-radius: 10px;
-            margin-bottom: calc(2 * var(--spacing-unit));
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        #progress-container {
-            height: 18px; /* Slightly taller */
-            border-radius: 9px;
-            overflow: hidden;
-            margin: calc(3 * var(--spacing-unit)) auto;
-            background-color: #e2e8f0;
-            max-width: 600px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        #progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--color-success), #059669); /* More vibrant green */
-            transition: width 0.4s ease-in-out;
-            text-align: right;
-            line-height: 18px;
-            color: white;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding-right: 10px;
-        }
-
-        .progress-error {
-            background: var(--color-error) !important;
-            padding-right: 0 !important;
-            text-align: center !important;
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 800px) {
-            .container {
-                padding: calc(3 * var(--spacing-unit));
-                margin: calc(2 * var(--spacing-unit)) auto;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-            .card {
-                width: 100%;
-                min-width: unset;
-            }
-            .content-section {
-                gap: calc(2 * var(--spacing-unit));
-            }
-            .option-group {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .option-item {
-                justify-content: space-between;
-                width: 100%;
-            }
-            .options input[type="number"], .options select {
-                width: 100px;
-            }
-            .options select[name="text_position"] {
-                width: 110px;
-            }
-            .options select[name="aspect_ratio"] {
-                width: 150px;
-            }
-            .options label {
-                margin: 0;
-            }
-        }
-    </style>
+@media(max-width:800px){.container{padding:16px}}
+</style>
 </head>
-<body>
-    <div class="container">
-        
-        <h1>VideoGen Pro ✨</h1>
-        <p>A simple, powerful tool to create professional zoom videos from images and an audio track with synced captions.</p>
+<body data-task-id="{{ task_id or '' }}">
+<div class="container">
 
-        <div id="progress-container" style="visibility: hidden;">
-            <div id="progress-bar">0%</div>
-        </div>
-        <p id="progress-message" style="font-weight: 600; color: var(--color-text-secondary); min-height: 1.5em;"></p>
+    
+    
+    <h1>VideoGen Pro ✨</h1>
+    <p style="color:var(--color-text-secondary)">Upload images & audio, reorder images, and toggle captions before generating the video.</p>
 
+    <!-- Progress Bar (sticky top) -->
+    <div id="progress-container">
+        <div id="progress-bar">0%</div>
+    </div>
+    <p id="progress-message" style="font-weight:600;color:var(--color-text-secondary);min-height:1.2em"></p>
+
+
+    <!-- Step 1: Upload Images -->
+    <div class="card">
+        <h3>Step 1 — Upload Images</h3>
         {% if not uploaded_images %}
         <form method="POST" enctype="multipart/form-data">
-            <h3>Step 1: Upload Images 🖼️</h3>
-            <p>Upload one or more high-resolution images for your video content.</p>
             <input type="file" name="images" accept="image/*" multiple required>
-            <button type="submit" class="btn">Upload Images</button>
+            <button class="btn" type="submit">Upload Images</button>
         </form>
-        {% endif %}
-
-        {% if uploaded_images and not uploaded_audio %}
-        <form method="POST" enctype="multipart/form-data">
-            <h3>Step 2: Upload Audio 🎤</h3>
-            <p>Upload an audio file (MP3, WAV, etc.) to transcribe and sync captions.</p>
-            <input type="file" name="audio" accept="audio/*" required>
-            <button type="submit" class="btn">Upload Audio & Transcribe</button>
-        </form>
-        {% endif %}
-
-        {% if uploaded_images and uploaded_audio and not session.get('task_id') %}
-            <form method="POST" class="options">
-                <h3>Step 3: Customization & Generate ⚙️</h3>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="zoom_effect" name="zoom_effect" value="on" checked>
-                    <label for="zoom_effect">Enable Dynamic Zoom Effect 🔍</label>
+        {% else %}
+        <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
+        <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+        <h4>Reorder Images (drag & drop)</h4>
+        <ul id="imageOrderList">
+            {% for img in uploaded_images %}
+            <li class="order-item" data-filename="{{ img }}">
+                <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
+                <div style="flex:1;text-align:left">
+                    <div style="font-weight:600">{{ img }}</div>
+                    <div style="font-size:12px;color:var(--color-text-secondary)">Drag to reorder</div>
                 </div>
-                
-                <div class="option-group">
-                    <div class="option-item">
-                        <label>Font Size:</label>
-                        <input type="number" name="font_size" value="{{ request.form.get('font_size', 50) }}" min="10" max="150">
-                    </div>
-                    <div class="option-item">
-                        <label>Words/Chunk:</label>
-                        <input type="number" name="words_per_chunk" value="{{ request.form.get('words_per_chunk', 5) }}" min="1" max="20">
-                    </div>
-                </div>
-
-                <div class="option-group" style="margin-bottom: 20px;">
-                    <div class="option-item">
-                        <label>Text Position:</label>
-                        <select name="text_position">
-                            <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
-                            <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
-                            <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
-                        </select>
-                    </div>
-                    <div class="option-item">
-                        <label>Aspect Ratio:</label>
-                        <select name="aspect_ratio">
-                            <option value="16:9" {% if request.form.get('aspect_ratio') == '16:9' or not request.form.get('aspect_ratio') %}selected{% endif %}>16:9 (Landscape - YouTube)</option>
-                            <option value="1:1" {% if request.form.get('aspect_ratio') == '1:1' %}selected{% endif %}>1:1 (Square - Instagram)</option>
-                            <option value="9:16" {% if request.form.get('aspect_ratio') == '9:16' %}selected{% endif %}>9:16 (Portrait - Reels/TikTok)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button type="submit" name="generate" value="video" class="btn">🚀 Start Video Generation</button>
-                <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset & Start Over</a>
-            </form>
-        {% endif %}
-        
-        {% if uploaded_images or uploaded_audio %}
-            <div class="content-section" id="result-section">
-                {% if uploaded_images %}
-                    <div class="card">
-                        <h2>Uploaded Images ({{ uploaded_images|length }})</h2>
-                        <div class="image-preview-group">
-                            {% for img in uploaded_images %}
-                                <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Image Thumbnail">
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-
-                {% if uploaded_audio %}
-                    <div class="card">
-                        <h2>Uploaded Audio Track</h2>
-                        <audio controls style="width: 100%; max-width: 300px;">
-                            <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
-                            Your browser does not support the audio element.
-                        </audio>
-                        {% if transcription %}
-                            <div class="transcription-box">
-                                <b>Transcription:</b> {{ transcription }}
-                            </div>
-                        {% else %}
-                            <p style="color: var(--color-primary-dark); font-style: italic;">Transcription in progress... please wait.</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if result_video %}
-            <div id="video-section">
-                <h2>🎬 Your Generated Video is Ready!</h2>
-                <video width="640" controls autoplay loop>
-                    <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <p>
-                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">⬇️ Download Final Video</a>
-                </p>
-            </div>
+            </li>
+            {% endfor %}
+        </ul>
         {% endif %}
     </div>
 
-    <script>
-    // --- Consolidated Script Block ---
-    const taskId = "{{ session.get('task_id', '') }}";
-    const resultVideo = "{{ session.get('result_video', '') }}";
-    const progressStore = JSON.parse('{{ progress_store | tojson | safe }}');
+    <!-- Step 2: Upload Audio -->
+    {% if uploaded_images and not uploaded_audio %}
+    <div class="card">
+        <h3>Step 2 — Upload Audio</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="audio" accept="audio/*" required>
+            <button class="btn" type="submit">Upload Audio & Transcribe</button>
+        </form>
+    </div>
+    {% endif %}
 
-    if (taskId && !resultVideo && progressStore[taskId] !== 100) {
-        document.getElementById('progress-container').style.visibility = 'visible';
-        document.getElementById('progress-message').textContent = 'Video Generation in Progress...';
-        
-        const source = new EventSource(`/progress/${taskId}`);
-        
-        source.onmessage = function(event) {
-            let progress = parseInt(event.data);
-            const progressBar = document.getElementById('progress-bar');
-            const progressContainer = document.getElementById('progress-container');
-            const progressMessage = document.getElementById('progress-message');
+    <!-- Step 3: Customize & Generate -->
+    {% if uploaded_images and uploaded_audio %}
+    <div class="card">
+        <h3>Step 3 — Customize & Generate</h3>
+        <form method="POST" class="options">
+            <div style="margin-bottom:10px">
+                <label>
+                    <input type="checkbox" name="zoom_effect" {% if video_settings.get('use_zoom', True) %}checked{% endif %}>
+                    Enable Dynamic Zoom Effect
+                </label>
+                <label style="margin-left:16px">
+                    <input type="checkbox" name="show_captions" {% if video_settings.get('show_captions', True) %}checked{% endif %}>
+                    Show Captions
+                </label>
+            </div>
 
-            if (progress >= 0 && progress <= 100) {
-                progressBar.style.width = progress + '%';
-                progressBar.textContent = progress + '%';
-                progressContainer.classList.remove('progress-error');
-                
-                if (progress === 100) {
-                    progressMessage.textContent = 'Generation Complete. Redirecting...';
-                    source.close();
-                    window.location.href = `/complete_task/${taskId}`; 
-                }
-            } else if (progress === -1) {
-                progressMessage.textContent = 'Video Generation Failed. Please check server logs.';
-                progressBar.style.width = '100%';
-                progressBar.classList.add('progress-error');
-                progressBar.textContent = 'ERROR';
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                <label>Font Size: <input type="number" name="font_size" value="{{ video_settings.get('font_size', 50) }}" min="10" max="150"></label>
+                <label>Words/Chunk: <input type="number" name="words_per_chunk" value="{{ video_settings.get('words_per_chunk', 5) }}" min="1" max="40"></label>
+                <label>Text Position:
+                    <select name="text_position">
+                        <option value="bottom" {% if video_settings.get('text_position', 'bottom')=='bottom' %}selected{% endif %}>Bottom</option>
+                        <option value="center" {% if video_settings.get('text_position')=='center' %}selected{% endif %}>Center</option>
+                        <option value="top" {% if video_settings.get('text_position')=='top' %}selected{% endif %}>Top</option>
+                    </select>
+                </label>
+                <label>Aspect Ratio:
+                    <select name="aspect_ratio">
+                        <option value="16:9" {% if video_settings.get('aspect_ratio','16:9')=='16:9' %}selected{% endif %}>16:9</option>
+                        <option value="1:1" {% if video_settings.get('aspect_ratio')=='1:1' %}selected{% endif %}>1:1</option>
+                        <option value="9:16" {% if video_settings.get('aspect_ratio')=='9:16' %}selected{% endif %}>9:16</option>
+                    </select>
+                </label>
+            </div>
+
+            <div id="imageOrderHiddenInputs"></div>
+
+            <div style="margin-top:12px">
+                <button class="btn" name="generate" value="video" type="submit">🚀 Start Video Generation</button>
+                {% if result_video %}
+                <button class="btn" type="button" id="regenerateBtn" style="margin-left:12px">🔄 Regenerate Video</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Upload Previews & Transcription -->
+    {% if uploaded_images or uploaded_audio %}
+    <div class="card">
+        <h3>Uploads & Transcription</h3>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+            {% if uploaded_images %}
+            <div>
+                <h4>Images</h4>
+                <div class="image-preview-group">
+                    {% for img in uploaded_images %}
+                    <img src="{{ url_for('send_uploaded', filename=img) }}" class="image-thumb" alt="img">
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% if uploaded_audio %}
+            <div>
+                <h4>Audio</h4>
+                <audio controls style="width:100%;max-width:360px">
+                    <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
+                    Your browser does not support the audio element.
+                </audio>
+                {% if transcription %}
+                <div class="transcription-box" style="margin-top:12px">{{ transcription }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Generated Video -->
+    <div class="card" id="video-section" {% if not result_video %}style="display:none"{% endif %}>
+        <h3>🎬 Generated Video</h3>
+        <video id="resultVideo" width="640" controls autoplay loop>
+            {% if result_video %}
+            <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
+            {% endif %}
+        </video>
+        <p>
+            {% if result_video %}
+            <a class="btn" id="downloadVideo" href="{{ url_for('send_output', filename=result_video) }}" download>⬇️ Download Final Video</a>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+const imageOrderList = document.getElementById('imageOrderList');
+if (imageOrderList) new Sortable(imageOrderList,{animation:150,ghostClass:'dragging'});
+
+// Append hidden inputs before submit
+document.querySelectorAll('form.options').forEach(formEl=>{
+    formEl.addEventListener('submit',e=>{
+        const container=document.getElementById('imageOrderHiddenInputs');
+        container.innerHTML='';
+        if(imageOrderList){
+            imageOrderList.querySelectorAll('li').forEach(item=>{
+                const input=document.createElement('input');
+                input.type='hidden';
+                input.name='image_order[]';
+                input.value=item.getAttribute('data-filename');
+                container.appendChild(input);
+            });
+        }
+    });
+});
+
+// Regenerate
+const regenerateBtn=document.getElementById('regenerateBtn');
+if(regenerateBtn){
+    regenerateBtn.addEventListener('click',()=>{
+        const form=document.querySelector('form.options');
+        const container=document.getElementById('imageOrderHiddenInputs');
+        container.innerHTML='';
+        imageOrderList.querySelectorAll('li').forEach(item=>{
+            const input=document.createElement('input');
+            input.type='hidden';
+            input.name='image_order[]';
+            input.value=item.getAttribute('data-filename');
+            container.appendChild(input);
+        });
+        const regenInput=form.querySelector('input[name="regenerate"]')||(()=>{const inp=document.createElement('input'); inp.type='hidden'; inp.name='regenerate'; inp.value='1'; form.appendChild(inp); return inp})();
+        const formData=new FormData(form);
+        fetch(window.location.href,{method:'POST',body:formData})
+        .then(resp=>resp.json())
+        .then(data=>{if(data.task_id) monitorProgress(data.task_id)})
+        .catch(err=>console.error(err));
+    });
+}
+
+// Monitor SSE progress
+function monitorProgress(taskId){
+    document.getElementById('progress-container').style.visibility='visible';
+    const progressBar = document.getElementById('progress-bar');
+    const progressMessage = document.getElementById('progress-message');
+
+    const source = new EventSource(`/progress/${taskId}`);
+    source.onmessage=function(event){
+        let progress=parseInt(event.data);
+        if(progress>=0 && progress<=100){
+            progressBar.style.width=progress+'%';
+            progressBar.textContent=progress+'%';
+            progressBar.classList.remove('progress-error');
+            if(progress===100){
                 source.close();
-                window.location.href = `/complete_task/${taskId}`; 
-            }
-        };
+                fetch(`/complete_task/${taskId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const filename = data.filename;
+                        const timestamp = Date.now();
+                        const videoUrl = `/outputs/${filename}?t=${timestamp}`;
 
-        source.onerror = function(err) {
-            console.error("EventSource failed:", err);
+                        const video = document.getElementById('resultVideo');
+                        const downloadBtn = document.getElementById('downloadVideo');
+
+                        if (video) {
+                            video.src = videoUrl;
+                            video.load();
+                            video.play();
+                        }
+                        if (downloadBtn) downloadBtn.href = videoUrl;
+
+                        document.getElementById('video-section').style.display = 'block';
+                        progressMessage.textContent = '✅ Video Updated!';
+                    } else {
+                        progressMessage.textContent = '❌ ' + (data.message || 'Video Generation Failed.');
+                        progressBar.style.width = '100%';
+                        progressBar.classList.add('progress-error');
+                        progressBar.textContent = 'ERROR';
+                    }
+                })
+                .catch(err => { console.error(err); });
+            }
+        } else if(progress===-1){
+            progressMessage.textContent='❌ Video Generation Failed.';
+            progressBar.style.width='100%';
+            progressBar.classList.add('progress-error');
+            progressBar.textContent='ERROR';
             source.close();
-        };
-    }
-
-    window.onload = () => {
-        if (resultVideo) {
-            const videoSection = document.getElementById("video-section");
-            if (videoSection) {
-                videoSection.scrollIntoView({ behavior: "smooth" });
-            }
         }
     };
-    </script>
+    source.onerror=function(err){console.error(err); source.close();}
+}
+
+// Auto-start monitoring if a task is in progress
+window.addEventListener('load', () => {
+    const TASK_ID = document.body.dataset.taskId || null;
+    if (TASK_ID) {
+        monitorProgress(TASK_ID);
+        const pc = document.getElementById('progress-container');
+        if (pc) pc.style.visibility = 'visible';
+    }
+});
+</script>
 </body>
 </html>
