@@ -216,4 +216,6 @@ __marimo__/
 .streamlit/secrets.toml
 /static/uploads/
 /static/outputs/
+/static/audio/
+/tmp_segments/
 /static

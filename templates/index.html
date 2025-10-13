@@ -1,67 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>GifMagic MVP</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; scroll-behavior: smooth; }
-        input[type="file"] { margin: 20px; }
-        .btn { background-color: #86A3A3; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .btn:hover { background-color: #5b7c7c; }
-        img { width: 300px; border: 2px solid #ccc; border-radius: 10px; margin: 10px 0; }
-        .image-container { 
-            display: flex; 
-            justify-content: center; 
-            align-items: flex-start;  /* <-- Align top edges */
-            gap: 40px; 
-            margin-top: 30px; 
-        }
-        h3 { margin: 0 0 10px 0; }  /* <-- Reduce heading spacing */
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VideoGen Pro ✨</title>
+<style>
+:root{
+    --color-primary:#3b82f6;
+    --color-primary-dark:#2563eb;
+    --color-text-main:#1f2937;
+    --color-text-secondary:#4b5563;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f7f9fc;padding:24px;margin:0}
+.container{max-width:1100px;margin:24px auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.06);border:1px solid #e6eef9;position:relative}
+h1{margin:0 0 8px;color:var(--color-text-main)}
+.card{background:#f9fbfd;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #eef6ff}
+input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;border:2px dashed #dbeafe;background:#fbfdff}
+.btn{background:var(--color-primary);color:#fff;padding:10px 16px;border-radius:8px;border:none;cursor:pointer}
+.btn-reset{background:#ef4444}
+#imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:16px}
+#imageOrderList li{min-width:120px;display:flex;flex-direction:column;align-items:center;cursor:grab;padding:8px;background:#fff;border-radius:8px;border:1px solid #eef6ff}
+.order-item.dragging{opacity:0.6}
+.image-thumb{width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #e6f0ff;display:block;margin-bottom:6px;text-align:center}
 
+/* Progress Bar */
+#progress-container{
+    height:24px;
+    border-radius:12px;
+    overflow:hidden;
+    background:#e2e8f0;
+    margin-bottom:16px;
+    visibility:hidden;
+    position:sticky;
+    top:0;
+    z-index:999;
+}
+#progress-bar{
+    height:100%;
+    background:linear-gradient(90deg,#10b981,#059669);
+    width:0;
+    text-align:right;
+    padding-right:8px;
+    color:#fff;
+    font-weight:700;
+    line-height:24px;
+}
+.progress-error{background:#ef4444 !important}
+
+@media(max-width:800px){.container{padding:16px}}
+</style>
 </head>
-<body>
-    <h1>GifMagic MVP</h1>
-    <p>Upload an image to see it come alive as a short animated GIF!</p>
+<body data-task-id="{{ task_id or '' }}">
+<div class="container">
+    <h1>VideoGen Pro ✨</h1>
+    <p style="color:var(--color-text-secondary)">Upload images & audio, reorder images, and generate your video.</p>
 
+    <!-- Progress Bar (sticky top) -->
+    <div id="progress-container">
+        <div id="progress-bar">0%</div>
+    </div>
+    <p id="progress-message" style="font-weight:600;color:var(--color-text-secondary);min-height:1.2em"></p>
+
+    <!-- Step 1: Upload Images -->
+    <!-- Step 1 — Upload Images -->
+<div class="card">
+    <h3>Step 1 — Upload Images</h3>
+    {% if not uploaded_images %}
     <form method="POST" enctype="multipart/form-data">
-        {% if not uploaded_image %}
-            <input type="file" name="image" accept="image/*" required>
-            <button type="submit" class="btn">Upload Image</button>
-        {% else %}
-            <select name="effect">
-                <option value="zoom">Zoom</option>
-                <option value="rotate">Rotate</option>
-                <option value="pan">Pan</option>
-                <option value="fade">Fade</option>
-            </select>
-            <button type="submit" class="btn">Apply Effect</button>
-            <a href="{{ url_for('reset') }}" class="btn" style="background-color: #ccc; color: black;">Reset</a>
-        {% endif %}
+        <input type="file" name="images" accept="image/*" multiple required>
+        <button class="btn" type="submit">Upload Images</button>
+    </form>
+    {% else %}
+    <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
+
+    <!-- Add More Images Form -->
+    <form method="POST" enctype="multipart/form-data" style="margin-bottom:12px;">
+        <input type="file" name="images" accept="image/*" multiple required>
+        <button class="btn" type="submit">➕ Add More Images</button>
     </form>
 
-    {% if uploaded_image %}
-    <div class="image-container" id="result-section">
-        <div>
-            <h3>Uploaded Image:</h3>
-            <img src="{{ url_for('send_uploaded', filename=uploaded_image) }}" alt="Uploaded Image">
-        </div>
-        {% if result_gif %}
-        <div>
-            <h3>Animated GIF:</h3>
-            <img src="{{ url_for('send_output', filename=result_gif) }}" alt="Generated GIF">
-            <p><a href="{{ url_for('send_output', filename=result_gif) }}" download>Download GIF</a></p>
-        </div>
-        {% endif %}
+    <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+
+    <h4>Reorder Images (drag & drop)</h4>
+    <ul id="imageOrderList">
+        {% for img in uploaded_images %}
+        <li class="order-item" data-filename="{{ img }}">
+            <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
+            <div style="text-align:center;font-size:12px;margin-top:4px">{{ img }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+    <!-- Step 2: Upload Audio -->
+    {% if uploaded_images and not uploaded_audio %}
+    <div class="card">
+        <h3>Step 2 — Upload Audio</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="audio" accept="audio/*" required>
+            <button class="btn" type="submit">Upload Audio</button>
+        </form>
     </div>
     {% endif %}
 
-    {% if scroll_to %}
-    <script>
-        window.onload = () => {
-            document.getElementById("{{ scroll_to }}").scrollIntoView({ behavior: "smooth" });
-        };
-    </script>
+    <!-- Step 3: Generate Video -->
+    {% if uploaded_images and uploaded_audio %}
+    <div class="card">
+        <h3>Step 3 — Generate Video</h3>
+        <form method="POST" class="options">
+            <div style="margin-bottom:10px">
+                <label>
+                    <input type="checkbox" name="zoom_effect" {% if video_settings.get('use_zoom', True) %}checked{% endif %}>
+                    Enable Dynamic Zoom Effect
+                </label>
+                <label style="margin-left:16px">
+                    Aspect Ratio:
+                    <select name="aspect_ratio">
+                        <option value="16:9" {% if video_settings.get('aspect_ratio','16:9')=='16:9' %}selected{% endif %}>16:9</option>
+                        <option value="1:1" {% if video_settings.get('aspect_ratio')=='1:1' %}selected{% endif %}>1:1</option>
+                        <option value="9:16" {% if video_settings.get('aspect_ratio')=='9:16' %}selected{% endif %}>9:16</option>
+                    </select>
+                </label>
+            </div>
+
+            <div id="imageOrderHiddenInputs"></div>
+
+            <div style="margin-top:12px">
+                <button class="btn" name="generate" value="video" type="submit">🚀 Start Video Generation</button>
+                {% if result_video %}
+                <button class="btn" type="button" id="regenerateBtn" style="margin-left:12px">🔄 Regenerate Video</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
     {% endif %}
+
+    <!-- Audio Transcript -->
+    {% if uploaded_audio %}
+    <div class="card">
+        <h3>🎤 Audio Transcript</h3>
+        <pre style="white-space:pre-wrap;word-wrap:break-word;color:var(--color-text-main);background:#f0f4f8;padding:12px;border-radius:8px;border:1px solid #eef6ff;">
+            {{ audio_transcript or "Transcription will appear here..." }}
+        </pre>
+    </div>
+    {% endif %}
+
+    <!-- Generated Video -->
+    <div class="card" id="video-section" {% if not result_video %}style="display:none"{% endif %}>
+        <h3>🎬 Generated Video</h3>
+        <video id="resultVideo" width="640" controls autoplay loop>
+        </video>
+        <p>
+            {% if result_video %}
+            <a class="btn" id="downloadVideo" href="{{ url_for('send_output', filename=result_video) }}" download>⬇️ Download Final Video</a>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+const imageOrderList = document.getElementById('imageOrderList');
+if (imageOrderList) new Sortable(imageOrderList,{animation:150,ghostClass:'dragging'});
+
+document.querySelectorAll('form.options').forEach(formEl=>{
+    formEl.addEventListener('submit',e=>{
+        const container=document.getElementById('imageOrderHiddenInputs');
+        container.innerHTML='';
+        if(imageOrderList){
+            imageOrderList.querySelectorAll('li').forEach(item=>{
+                const input=document.createElement('input');
+                input.type='hidden';
+                input.name='image_order[]';
+                input.value=item.getAttribute('data-filename');
+                container.appendChild(input);
+            });
+        }
+    });
+});
+
+function monitorProgress(taskId){
+    document.getElementById('progress-container').style.visibility='visible';
+    const progressBar = document.getElementById('progress-bar');
+    const progressMessage = document.getElementById('progress-message');
+
+    const source = new EventSource(`/progress/${taskId}`);
+    source.onmessage=function(event){
+        let progress=parseInt(event.data);
+        if(progress>=0 && progress<=100){
+            progressBar.style.width=progress+'%';
+            progressBar.textContent=progress+'%';
+            progressBar.classList.remove('progress-error');
+            if(progress===100){
+                source.close();
+                fetch(`/complete_task/${taskId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const filename = data.filename;
+                        const timestamp = Date.now();
+                        const videoUrl = `/outputs/${filename}?t=${timestamp}`;
+
+                        const video = document.getElementById('resultVideo');
+                        const downloadBtn = document.getElementById('downloadVideo');
+
+                        if (video) {
+                            video.src = videoUrl;
+                            video.load();
+                            video.play();
+                        }
+                        if (downloadBtn) downloadBtn.href = videoUrl;
+
+                        document.getElementById('video-section').style.display = 'block';
+                        progressMessage.textContent = '✅ Video Updated!';
+                    } else {
+                        progressMessage.textContent = '❌ ' + (data.message || 'Video Generation Failed.');
+                        progressBar.style.width = '100%';
+                        progressBar.classList.add('progress-error');
+                        progressBar.textContent = 'ERROR';
+                    }
+                })
+                .catch(err => { console.error(err); });
+            }
+        } else if(progress===-1){
+            progressMessage.textContent='❌ Video Generation Failed.';
+            progressBar.style.width='100%';
+            progressBar.classList.add('progress-error');
+            progressBar.textContent='ERROR';
+            source.close();
+        }
+    };
+    source.onerror=function(err){console.error(err); source.close();}
+}
+
+window.addEventListener('load', () => {
+    const TASK_ID = document.body.dataset.taskId || null;
+    if (TASK_ID) {
+        monitorProgress(TASK_ID);
+        const pc = document.getElementById('progress-container');
+        if (pc) pc.style.visibility = 'visible';
+    }
+});
+</script>
 </body>
 </html>
