@@ -419,17 +419,50 @@ def send_audio(filename):
 @app.route('/reset')
 def reset():
     task_id = session.get('task_id')
+    # If a task exists, mark it as cancelled so background worker can stop gracefully.
     if task_id:
-        progress_store.pop(task_id, None)
+        progress_store[task_id] = -1
+        progress_store[f"error_{task_id}"] = "Cancelled by user via reset."
         progress_store.pop(f"result_{task_id}", None)
-        progress_store.pop(f"error_{task_id}", None)
-    
-    # Simple file cleanup (optional, but good practice)
-    for folder in [UPLOAD_FOLDER, AUDIO_FOLDER, OUTPUT_FOLDER]:
-        for filename in os.listdir(folder):
-            if filename != ".gitkeep":
-                os.remove(os.path.join(folder, filename))
 
+    # Try to delete files but ignore files that are in-use or cause errors.
+    for folder in [UPLOAD_FOLDER, AUDIO_FOLDER, OUTPUT_FOLDER]:
+        try:
+            for filename in os.listdir(folder):
+                if filename == ".gitkeep":
+                    continue
+                path = os.path.join(folder, filename)
+                try:
+                    if os.path.isdir(path):
+                        shutil.rmtree(path, ignore_errors=True)
+                    else:
+                        os.remove(path)
+                except PermissionError:
+                    # File is in use (common on Windows); skip it and log.
+                    print(f"[RESET] PermissionError deleting {path}; skipping.", file=sys.stderr)
+                except Exception as e:
+                    print(f"[RESET] Error deleting {path}: {e}", file=sys.stderr)
+        except FileNotFoundError:
+            # Folder might not exist; ignore
+            pass
+        except Exception as e:
+            print(f"[RESET] Error listing {folder}: {e}", file=sys.stderr)
+
+    # Attempt to clean TMP_FOLDER (try/except to be safe)
+    try:
+        for entry in os.listdir(TMP_FOLDER):
+            p = os.path.join(TMP_FOLDER, entry)
+            try:
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    os.remove(p)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Clear session and redirect to index
     session.clear()
     return redirect(url_for('index'))
 

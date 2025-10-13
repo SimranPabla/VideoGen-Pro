@@ -3,234 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VideoGen Pro</title>
+    <title>VideoGen Pro ✨</title>
     <style>
+        /* CSS Variables for Theme */
+        :root {
+            --color-primary: #3b82f6; /* A slightly warmer blue */
+            --color-primary-dark: #2563eb;
+            --color-background-light: #f7f9fc; /* Lighter background */
+            --color-background-card: #ffffff;
+            --color-text-main: #1f2937;
+            --color-text-secondary: #4b5563;
+            --color-border-light: #e5e7eb;
+            --color-success: #10b981;
+            --color-error: #ef4444;
+            --spacing-unit: 8px;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             text-align: center;
-            padding: 20px;
+            padding: calc(4 * var(--spacing-unit));
             margin: 0;
-            background-color: #f4f7f6;
+            background-color: var(--color-background-light);
             scroll-behavior: smooth;
         }
+
         .container {
-            background-color: #fff;
-            padding: 30px;
+            background-color: var(--color-background-card);
+            padding: calc(5 * var(--spacing-unit));
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            max-width: 1000px;
-            margin: 30px auto;
+            /* Slightly softer, modern shadow */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.05);
+            max-width: 1100px;
+            margin: calc(4 * var(--spacing-unit)) auto;
+            border: 1px solid var(--color-border-light);
         }
+
         h1 {
-            color: #1a202c;
+            color: var(--color-text-main);
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 800; /* Bolder for impact */
+        }
+
+        h3 {
+            color: var(--color-primary);
+            font-size: 1.35rem;
+            margin-top: calc(4 * var(--spacing-unit));
+            margin-bottom: calc(2 * var(--spacing-unit));
+            padding-bottom: var(--spacing-unit);
+            border-bottom: 2px solid var(--color-border-light);
+            display: inline-block;
             font-weight: 700;
         }
-        h3 {
-            color: #2d3748;
-            font-size: 1.25rem;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #edf2f7;
-            display: inline-block;
-        }
+
         p {
-            color: #4a5568;
-            margin-bottom: 20px;
+            color: var(--color-text-secondary);
+            margin-bottom: calc(3 * var(--spacing-unit));
+            line-height: 1.6;
         }
+
         input[type="file"], select, input[type="number"], button, .btn {
-            margin: 10px 5px;
-            padding: 10px 20px;
-            border-radius: 8px;
+            margin: var(--spacing-unit) 5px;
+            padding: calc(1.5 * var(--spacing-unit)) calc(3 * var(--spacing-unit));
+            border-radius: 10px; /* More rounded */
             font-size: 1rem;
-            border: 1px solid #cbd5e0;
+            border: 1px solid var(--color-border-light);
             transition: all 0.3s ease;
+            box-sizing: border-box; /* Crucial for consistent sizing */
         }
+
+        /* Focus state for inputs/selects */
+        input:focus, select:focus, button:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Subtle blue glow */
+            outline: none;
+        }
+
         .btn {
             display: inline-block;
             cursor: pointer;
             text-decoration: none;
             color: white;
-            background-color: #3182ce;
-            border-color: #3182ce;
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            font-weight: 600;
+            transform: translateY(0); /* For the subtle press effect */
         }
+
         .btn:hover {
-            background-color: #2c5282;
-            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+            background-color: var(--color-primary-dark);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
+
+        /* Subtle press effect on click */
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
         .btn-reset {
-            background-color: #e53e3e;
-            border-color: #e53e3e;
+            background-color: var(--color-error);
+            border-color: var(--color-error);
         }
+
         .btn-reset:hover {
-            background-color: #c53030;
+            background-color: #b91c1c;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
+
         input[type="file"] {
             border: 2px dashed #a0aec0;
-            background-color: #edf2f7;
-            color: #4a5568;
-            padding: 15px;
+            background-color: #f3f4f6;
+            color: var(--color-text-secondary);
+            padding: calc(2 * var(--spacing-unit));
             width: calc(100% - 40px);
-            max-width: 300px;
+            max-width: 350px;
             display: block;
-            margin: 10px auto;
+            margin: calc(2 * var(--spacing-unit)) auto;
+            border-radius: 12px;
         }
+
         input[type="file"]:hover {
-            border-color: #3182ce;
+            border-color: var(--color-primary);
+            background-color: #e5e7eb;
         }
+
         .options {
-            padding: 20px 0;
-            border-top: 1px solid #edf2f7;
-            border-bottom: 1px solid #edf2f7;
-            margin-bottom: 20px;
+            padding: calc(3 * var(--spacing-unit)) 0;
+            border-top: 1px solid var(--color-border-light);
+            border-bottom: 1px solid var(--color-border-light);
+            margin-bottom: calc(4 * var(--spacing-unit));
         }
+
         .options label {
             font-weight: 600;
-            color: #4a5568;
-            margin: 0 5px;
-            /* Added text-align center to labels */
-            text-align: center;
-            display: inline-block; /* Ensure it respects text-align */
+            color: var(--color-text-secondary);
+            margin: 0 10px; /* Increased margin for separation */
+            display: inline-block;
         }
+        
+        /* Consistent sizing for inputs in options */
+        .options input[type="number"], .options select {
+            padding: var(--spacing-unit) calc(1.5 * var(--spacing-unit));
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
         .options input[type="number"] {
-            width: 80px; 
+            width: 70px; 
             text-align: center;
         }
-        /* Increased width for Text Position dropdown */
+
         .options select[name="text_position"] {
             width: 140px; 
-            text-align: center;
         }
-        /* Increased width for Aspect Ratio dropdown */
+
         .options select[name="aspect_ratio"] {
-            width: 180px; /* Increased size significantly */
-            text-align: center;
+            width: 180px; 
         }
-        .options > div {
-            /* Added text-align center to contain the options correctly */
-            text-align: center;
+        
+        .option-group { /* New class for better grouping in the options form */
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px; /* Space between groups of options */
+            margin-bottom: 15px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .checkbox-group {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: calc(3 * var(--spacing-unit));
             gap: 10px;
         }
+
         .checkbox-group input[type="checkbox"] {
             width: 20px;
             height: 20px;
             margin: 0;
             border: 1px solid #cbd5e0;
             vertical-align: middle;
+            accent-color: var(--color-primary); /* Style for the checkbox itself */
+            border-radius: 4px;
         }
+
         .checkbox-group label {
             margin: 0;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--color-text-main);
+            cursor: pointer;
         }
+
         .content-section {
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            gap: 40px;
-            margin-top: 20px;
+            gap: calc(5 * var(--spacing-unit));
+            margin-top: calc(4 * var(--spacing-unit));
             flex-wrap: wrap;
-            padding: 20px 0;
-            border-top: 1px solid #edf2f7;
+            padding: calc(3 * var(--spacing-unit)) 0;
+            border-top: 1px solid var(--color-border-light);
         }
+
         .card {
-            background-color: #f7fafc;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            width: 45%;
-            min-width: 280px;
-            margin-bottom: 20px;
+            background-color: #f9fbfd; /* Slightly different background */
+            border-radius: 12px;
+            padding: calc(3 * var(--spacing-unit));
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            width: 48%; /* Slightly adjusted width for better use of space */
+            min-width: 320px;
+            margin-bottom: calc(3 * var(--spacing-unit));
+            border: 1px solid #f3f4f6;
         }
+
         .card h2 {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             margin-top: 0;
-            color: #2d3748;
+            margin-bottom: calc(2 * var(--spacing-unit));
+            color: var(--color-text-main);
+            font-weight: 700;
         }
-        img {
-            width: 100px;
-            height: 100px;
+        
+        .image-preview-group {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 10px; /* Added gap between images */
+        }
+
+        .image-preview-group img {
+            width: 80px; /* Slightly smaller for a tighter grid */
+            height: 80px;
             object-fit: cover;
-            border: 3px solid #ccc;
+            border: 2px solid var(--color-primary);
             border-radius: 8px;
-            margin: 5px;
+            margin: 0;
             display: inline-block;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+
         .transcription-box {
-            background-color: #4a5568;
+            background-color: var(--color-text-main); /* Dark background for transcription */
             color: white;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+            padding: calc(2 * var(--spacing-unit));
+            border-radius: 10px;
+            margin-top: calc(2 * var(--spacing-unit));
             font-size: 0.9rem;
-            line-height: 1.5;
+            line-height: 1.6;
             max-width: 100%;
             text-align: left;
             word-wrap: break-word;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-family: monospace; /* Monospace font for code-like text */
         }
+        
+        .transcription-box b {
+            color: var(--color-success); /* Highlighting the label */
+        }
+
         #video-section {
-            margin-top: 40px;
-            padding: 30px;
+            margin-top: calc(5 * var(--spacing-unit));
+            padding: calc(4 * var(--spacing-unit));
             background-color: #f7fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            border: 2px solid var(--color-primary); /* Primary color border for emphasis */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         #video-section video {
             max-width: 100%;
             height: auto;
-            max-height: 480px;
+            max-height: 540px;
+            border-radius: 10px;
+            margin-bottom: calc(2 * var(--spacing-unit));
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
+
         #progress-container {
-            height: 15px;
-            border-radius: 7px;
+            height: 18px; /* Slightly taller */
+            border-radius: 9px;
             overflow: hidden;
-            margin: 20px auto;
+            margin: calc(3 * var(--spacing-unit)) auto;
             background-color: #e2e8f0;
             max-width: 600px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
+
         #progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #48bb78, #38a169);
+            background: linear-gradient(90deg, var(--color-success), #059669); /* More vibrant green */
             transition: width 0.4s ease-in-out;
             text-align: right;
-            line-height: 15px;
+            line-height: 18px;
             color: white;
-            font-size: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding-right: 10px;
         }
+
         .progress-error {
-            background: #e53e3e !important;
+            background: var(--color-error) !important;
+            padding-right: 0 !important;
+            text-align: center !important;
         }
-        @media (max-width: 768px) {
+
+        /* Responsive Adjustments */
+        @media (max-width: 800px) {
             .container {
-                padding: 20px 15px;
+                padding: calc(3 * var(--spacing-unit));
+                margin: calc(2 * var(--spacing-unit)) auto;
+            }
+            h1 {
+                font-size: 2rem;
             }
             .card {
                 width: 100%;
                 min-width: unset;
             }
-            .options input[type="number"] {
-                width: 60px;
+            .content-section {
+                gap: calc(2 * var(--spacing-unit));
             }
-            .options select[name="text_position"] {
+            .option-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .option-item {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .options input[type="number"], .options select {
                 width: 100px;
             }
+            .options select[name="text_position"] {
+                width: 110px;
+            }
             .options select[name="aspect_ratio"] {
-                width: 140px;
+                width: 150px;
             }
             .options label {
-                display: block;
-                margin-top: 10px;
+                margin: 0;
             }
         }
     </style>
@@ -238,18 +357,18 @@
 <body>
     <div class="container">
         
-        <h1>VideoGen Pro</h1>
-        <p>A simple tool to create zoom videos from images and an audio track.</p>
+        <h1>VideoGen Pro ✨</h1>
+        <p>A simple, powerful tool to create professional zoom videos from images and an audio track with synced captions.</p>
 
         <div id="progress-container" style="visibility: hidden;">
-            <div id="progress-bar"></div>
+            <div id="progress-bar">0%</div>
         </div>
-        <p id="progress-message" style="font-weight: 600; color: #4a5568; min-height: 1.5em;"></p>
+        <p id="progress-message" style="font-weight: 600; color: var(--color-text-secondary); min-height: 1.5em;"></p>
 
         {% if not uploaded_images %}
         <form method="POST" enctype="multipart/form-data">
             <h3>Step 1: Upload Images 🖼️</h3>
-            <p>Upload one or more images for your video content.</p>
+            <p>Upload one or more high-resolution images for your video content.</p>
             <input type="file" name="images" accept="image/*" multiple required>
             <button type="submit" class="btn">Upload Images</button>
         </form>
@@ -258,7 +377,7 @@
         {% if uploaded_images and not uploaded_audio %}
         <form method="POST" enctype="multipart/form-data">
             <h3>Step 2: Upload Audio 🎤</h3>
-            <p>Upload an audio file to transcribe and sync captions.</p>
+            <p>Upload an audio file (MP3, WAV, etc.) to transcribe and sync captions.</p>
             <input type="file" name="audio" accept="audio/*" required>
             <button type="submit" class="btn">Upload Audio & Transcribe</button>
         </form>
@@ -267,32 +386,44 @@
         {% if uploaded_images and uploaded_audio and not session.get('task_id') %}
             <form method="POST" class="options">
                 <h3>Step 3: Customization & Generate ⚙️</h3>
+                
                 <div class="checkbox-group">
                     <input type="checkbox" id="zoom_effect" name="zoom_effect" value="on" checked>
-                    <label for="zoom_effect">Use Zoom Effect 🔍</label>
+                    <label for="zoom_effect">Enable Dynamic Zoom Effect 🔍</label>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label>Font Size:</label>
-                    <input type="number" name="font_size" value="{{ request.form.get('font_size', 50) }}" min="10" max="150">
-                    <label>Words/Chunk:</label>
-                    <input type="number" name="words_per_chunk" value="{{ request.form.get('words_per_chunk', 5) }}" min="1" max="20">
+                
+                <div class="option-group">
+                    <div class="option-item">
+                        <label>Font Size:</label>
+                        <input type="number" name="font_size" value="{{ request.form.get('font_size', 50) }}" min="10" max="150">
+                    </div>
+                    <div class="option-item">
+                        <label>Words/Chunk:</label>
+                        <input type="number" name="words_per_chunk" value="{{ request.form.get('words_per_chunk', 5) }}" min="1" max="20">
+                    </div>
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label>Text Position:</label>
-                    <select name="text_position">
-                        <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
-                        <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
-                        <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
-                    </select>
-                    <label>Aspect Ratio:</label>
-                    <select name="aspect_ratio">
-                        <option value="16:9" {% if request.form.get('aspect_ratio') == '16:9' or not request.form.get('aspect_ratio') %}selected{% endif %}>16:9 (Landscape)</option>
-                        <option value="1:1" {% if request.form.get('aspect_ratio') == '1:1' %}selected{% endif %}>1:1 (Square)</option>
-                        <option value="9:16" {% if request.form.get('aspect_ratio') == '9:16' %}selected{% endif %}>9:16 (Portrait/Reels)</option>
-                    </select>
+
+                <div class="option-group" style="margin-bottom: 20px;">
+                    <div class="option-item">
+                        <label>Text Position:</label>
+                        <select name="text_position">
+                            <option value="bottom" {% if request.form.get('text_position') == 'bottom' %}selected{% endif %}>Bottom</option>
+                            <option value="center" {% if request.form.get('text_position') == 'center' or not request.form.get('text_position') %}selected{% endif %}>Center</option>
+                            <option value="top" {% if request.form.get('text_position') == 'top' %}selected{% endif %}>Top</option>
+                        </select>
+                    </div>
+                    <div class="option-item">
+                        <label>Aspect Ratio:</label>
+                        <select name="aspect_ratio">
+                            <option value="16:9" {% if request.form.get('aspect_ratio') == '16:9' or not request.form.get('aspect_ratio') %}selected{% endif %}>16:9 (Landscape - YouTube)</option>
+                            <option value="1:1" {% if request.form.get('aspect_ratio') == '1:1' %}selected{% endif %}>1:1 (Square - Instagram)</option>
+                            <option value="9:16" {% if request.form.get('aspect_ratio') == '9:16' %}selected{% endif %}>9:16 (Portrait - Reels/TikTok)</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" name="generate" value="video" class="btn">🚀 Start Generation</button>
-                <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+
+                <button type="submit" name="generate" value="video" class="btn">🚀 Start Video Generation</button>
+                <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset & Start Over</a>
             </form>
         {% endif %}
         
@@ -301,9 +432,9 @@
                 {% if uploaded_images %}
                     <div class="card">
                         <h2>Uploaded Images ({{ uploaded_images|length }})</h2>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                        <div class="image-preview-group">
                             {% for img in uploaded_images %}
-                                <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Image">
+                                <img src="{{ url_for('send_uploaded', filename=img) }}" alt="Image Thumbnail">
                             {% endfor %}
                         </div>
                     </div>
@@ -311,16 +442,17 @@
 
                 {% if uploaded_audio %}
                     <div class="card">
-                        <h2>Uploaded Audio</h2>
+                        <h2>Uploaded Audio Track</h2>
                         <audio controls style="width: 100%; max-width: 300px;">
                             <source src="{{ url_for('send_audio', filename=uploaded_audio) }}">
+                            Your browser does not support the audio element.
                         </audio>
                         {% if transcription %}
                             <div class="transcription-box">
                                 <b>Transcription:</b> {{ transcription }}
                             </div>
                         {% else %}
-                            <p style="color: #3182ce;"><i>Transcribing... please wait.</i></p>
+                            <p style="color: var(--color-primary-dark); font-style: italic;">Transcription in progress... please wait.</p>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -329,13 +461,13 @@
 
         {% if result_video %}
             <div id="video-section">
-                <h2>✨ Generated Video is Ready!</h2>
-                <video width="640" controls autoplay>
+                <h2>🎬 Your Generated Video is Ready!</h2>
+                <video width="640" controls autoplay loop>
                     <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <p>
-                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">⬇️ Download Video</a>
+                    <a href="{{ url_for('send_output', filename=result_video) }}" download class="btn">⬇️ Download Final Video</a>
                 </p>
             </div>
         {% endif %}
