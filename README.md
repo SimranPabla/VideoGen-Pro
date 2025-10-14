@@ -4,8 +4,6 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-yellow?logo=javascript)  
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)  
 
-An interactive web app for uploading and previewing images, perfect for AI-driven video generation projects.  
-
 ---
 
 ## 🚀 Features  
@@ -13,13 +11,14 @@ An interactive web app for uploading and previewing images, perfect for AI-drive
 - ➕ **Add More Images** dynamically  
 - 🧹 **Reset / Clear All** images  
 - 🧭 **Smooth Preview Layout**  
-- 💡 Clean UI with modern design  
+- 💡 **Clean UI with modern design**
 
 ---
 
 ## 🧰 Tech Stack  
-- **Frontend:** HTML5, CSS3, JavaScript  
-- **Framework:** None (Pure HTML/CSS/JS)  
+- **Frontend:** HTML5, CSS3, JavaScript
+- **Backend:** Python, Flask, MoviePy
+- **Framework:** Pure HTML/CSS/JS
 - **Design:** Responsive, animated drag-and-drop zone  
 
 ---
