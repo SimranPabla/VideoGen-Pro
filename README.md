@@ -1,8 +1,11 @@
 # 🎥 VideoGen Pro ✨  
-![HTML5](https://img.shields.io/badge/HTML5-orange?logo=html5)  
-![CSS3](https://img.shields.io/badge/CSS3-blue?logo=css3)  
-![JavaScript](https://img.shields.io/badge/JavaScript-yellow?logo=javascript)  
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)  
+![HTML5](https://img.shields.io/badge/HTML5-orange?logo=html5)  ![CSS3](https://img.shields.io/badge/CSS3-blue?logo=css3) ![JavaScript](https://img.shields.io/badge/JavaScript-yellow?logo=javascript)  ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)  
+
+VideoGen Pro is a full-stack web application built on Flask that automates the creation of high-quality, professional videos from static images and an audio track.
+
+The app provides a clean, step-by-step interface for users to upload assets, reorder images using drag-and-drop, and select options like dynamic zoom (Ken Burns effect) and aspect ratio (e.g., 9:16 vertical video).
+
+On the backend, it uses OpenAI's Whisper for fast audio transcription and MoviePy/FFmpeg to seamlessly generate the final video with real-time progress feedback delivered via Server-Sent Events (SSE). It's a comprehensive tool designed to streamline the production of content like social media clips and narrated visual stories.
 
 ---
 
