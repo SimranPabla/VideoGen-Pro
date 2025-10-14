@@ -23,9 +23,19 @@ An interactive web app for uploading and previewing images, perfect for AI-drive
 - **Design:** Responsive, animated drag-and-drop zone  
 
 ---
+# VideoGen Pro Screenshot
 
-## 🖼️ Preview  
-![VideoGen Pro Screenshot](https://github.com/your-username/videogen-pro/assets/screenshot-example.png)
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview1.png)
+
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview2.png)
+
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview3.png)
+
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview4.png)
+
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview5.png)
+
+![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview6.png)
 
 ---
 
