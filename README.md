@@ -167,7 +167,7 @@ The application will start, usually accessible at `http://127.0.0.1:5000/`.
 # 🧑‍💻 Author
 
 ### Simranjit Singh 
-* **📍 Calgary, Alberta**
+* **📍 Edmonton, Alberta**
 * **💬 Passionate about AI, cybersecurity, and creative tech solutions.**
 
 ## 🪪 License
