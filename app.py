@@ -28,13 +28,11 @@ from moviepy.editor import (
     concatenate_videoclips,
 )
 
-# --- Flask setup ---
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", str(uuid.uuid4()))
 app.permanent_session_lifetime = timedelta(minutes=60)
-app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
 
-# --- Paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 UPLOAD_FOLDER = os.path.join(STATIC_DIR, "uploads")
@@ -44,9 +42,8 @@ AUDIO_FOLDER = os.path.join(STATIC_DIR, "audio")
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, AUDIO_FOLDER]:
     os.makedirs(folder, exist_ok=True)
 
-# --- Runtime state ---
-# This in-memory store is appropriate for the current single-process prototype.
-# A production/multi-worker deployment should replace it with shared durable state.
+# In-memory state is acceptable for the current single-process prototype.
+# A multi-worker deployment should replace this with shared durable state.
 progress_store = {}
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -84,7 +81,6 @@ def remove_if_present(folder, filename):
             pass
 
 
-# --- Video generation ---
 def fast_video_generation(
     image_paths,
     audio_path,
@@ -160,7 +156,6 @@ def fast_video_generation(
             audio_clip.close()
 
 
-# --- Audio transcription ---
 def transcribe_audio(audio_path):
     try:
         result = model.transcribe(audio_path)
@@ -169,9 +164,9 @@ def transcribe_audio(audio_path):
         return f"Error transcribing audio: {exc}"
 
 
-# --- Flask routes ---
 @app.route("/", methods=["GET", "POST"])
 def index():
+    session.permanent = True
     uploaded_images = session.get("uploaded_images", [])
     uploaded_audio = session.get("uploaded_audio")
     task_id = session.get("task_id")
@@ -211,9 +206,8 @@ def index():
                 file.save(audio_path)
                 session["uploaded_audio"] = filename
 
-                # Whisper is intentionally synchronous in the current prototype.
-                # Flask's request-bound session cannot be mutated safely from a
-                # detached background thread.
+                # Flask session is request-context-bound; keep this synchronous
+                # rather than mutating session state from a detached thread.
                 session["audio_transcript"] = transcribe_audio(audio_path)
                 return redirect(url_for("index"))
 
@@ -364,4 +358,5 @@ def complete_task(task_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True)
+    debug_enabled = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_enabled, threaded=True, use_reloader=False)
