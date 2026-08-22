@@ -1,176 +1,265 @@
-# 🎥 VideoGen Pro ✨  
-![HTML5](https://img.shields.io/badge/HTML5-orange?logo=html5)  ![CSS3](https://img.shields.io/badge/CSS3-blue?logo=css3) ![JavaScript](https://img.shields.io/badge/JavaScript-yellow?logo=javascript)  ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)  
+# VideoGen Pro
 
-VideoGen Pro is a full-stack web application built on Flask that automates the creation of high-quality, professional videos from static images and an audio track.
+Flask-based media-processing application that turns ordered images and an audio track into a narrated MP4 video, with Whisper transcription and Server-Sent Events (SSE) progress reporting.
 
-The app provides a clean, step-by-step interface for users to upload assets, reorder images using drag-and-drop, and select options like dynamic zoom (Ken Burns effect) and aspect ratio (e.g., 9:16 vertical video).
+The project combines a browser UI with a Python media-processing backend. It is designed as a **local/single-process prototype**, not as a production multi-user video service.
 
-On the backend, it uses OpenAI's Whisper for fast audio transcription and MoviePy/FFmpeg to seamlessly generate the final video with real-time progress feedback delivered via Server-Sent Events (SSE). It's a comprehensive tool designed to streamline the production of content like social media clips and narrated visual stories.
+## Problem
 
----
+Creating a narrated image video manually requires several repetitive steps: ordering visual assets, matching them to an audio track, normalizing the output frame size, rendering the video, and tracking long-running encoding work.
 
-## 🚀 Features  
-- 🖼️ **Drag & Drop Image Uploads**  
-- ➕ **Add More Images** dynamically  
-- 🧹 **Reset / Clear All** images  
-- 🧭 **Smooth Preview Layout**  
-- 💡 **Clean UI with modern design**
+VideoGen Pro packages those steps into one workflow:
 
----
+1. Upload images.
+2. Reorder them in the browser.
+3. Upload an audio track.
+4. Transcribe the audio with Whisper.
+5. Select an aspect ratio and optional zoom effect.
+6. Render the final MP4 with MoviePy/FFmpeg.
+7. Track generation progress in the browser through SSE.
 
-## 🧰 Tech Stack  
-- **Frontend:** HTML5, CSS3, JavaScript
-- **Backend:** Python, Flask, MoviePy
-- **Framework:** Pure HTML/CSS/JS
-- **Design:** Responsive, animated drag-and-drop zone  
+## Architecture
 
----
-# VideoGen Pro Screenshot
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview1.png)
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview2.png)
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview3.png)
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview4.png)
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview5.png)
-
-![VideoGen Pro Screenshot](https://raw.githubusercontent.com/SimranPabla/gifmagic.ai/refs/heads/main/templates/preview/preview6.png)
-
----
-
-## 📄 Code Example  
-
-Here’s the basic HTML structure for **VideoGen Pro**:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VideoGen Pro ✨</title>
-<style>
-/* Add your styling here */
-</style>
-</head>
-<body>
-  <div class="container">
-    <h1>🎥 VideoGen Pro ✨</h1>
-    <div id="drop-area" class="drop-zone">
-      <p>Drag & Drop Images Here</p>
-      <input type="file" id="fileElem" multiple accept="image/*">
-      <button id="addMoreBtn">Add More</button>
-      <div id="gallery"></div>
-      <button id="resetBtn">Reset</button>
-    </div>
-  </div>
-
-<script>
-  // JavaScript logic for upload & preview
-</script>
-</body>
-</html>
+```text
+Browser
+  |
+  | image/audio uploads + settings
+  v
+Flask application
+  |
+  +--> session-bound asset metadata
+  |
+  +--> Whisper "base" model
+  |      |
+  |      +--> audio transcript
+  |
+  +--> background video-generation thread
+         |
+         +--> MoviePy composition
+         +--> FFmpeg H.264/AAC encoding
+         +--> in-memory task progress
+                 |
+                 v
+              SSE stream
+                 |
+                 v
+              Browser UI
 ```
-## 🛠️ Installation and Setup
+
+## Current Features
+
+- Multi-image upload
+- Drag-and-drop image ordering with SortableJS
+- Audio upload and Whisper transcription
+- `16:9`, `1:1`, and `9:16` output ratios
+- Optional dynamic zoom effect
+- H.264 video with AAC audio
+- Background video rendering
+- Server-Sent Events progress updates
+- Session-scoped access to uploaded and generated assets
+- 200 MB Flask request-size limit
+
+## Implementation
+
+### Image composition
+
+Each image is resized to fit inside the selected output frame while preserving its aspect ratio. The image is centered on a white background rather than stretched to fill the frame.
+
+The audio duration is divided evenly across the ordered images, then MoviePy concatenates the clips and attaches the original audio track.
+
+### Audio transcription
+
+The application loads OpenAI Whisper's `base` model and selects CUDA when PyTorch reports that a compatible GPU is available; otherwise it runs on CPU.
+
+Transcription is currently performed synchronously during audio upload. This is deliberate: Flask's cookie-backed `session` object is request-context-bound and should not be mutated from a detached background thread.
+
+### Background video generation
+
+Video rendering remains asynchronous. A background thread updates an in-memory task record while the browser consumes progress through `/progress/<task_id>` using Server-Sent Events.
+
+This keeps the page responsive while MoviePy/FFmpeg performs encoding.
+
+### File handling
+
+Uploaded filenames are normalized with `secure_filename` and stored with a random prefix to reduce filename collisions.
+
+The current branch also restricts accepted extensions:
+
+- Images: `png`, `jpg`, `jpeg`, `webp`
+- Audio: `mp3`, `wav`, `m4a`, `aac`, `ogg`, `flac`
+
+Asset-serving routes verify that the requested file belongs to the active Flask session. Reset removes only files associated with the current session rather than clearing the shared runtime directories.
+
+### Temporary encoding files
+
+Each render uses an output-specific temporary audio filename instead of a single global `temp-audio.m4a`, preventing concurrent render jobs from targeting the same temporary path.
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Transcription | OpenAI Whisper, PyTorch |
+| Video processing | MoviePy, FFmpeg |
+| Frontend | HTML, CSS, JavaScript |
+| Drag-and-drop ordering | SortableJS |
+| Progress transport | Server-Sent Events (SSE) |
+| Video encoding | H.264 (`libx264`) + AAC |
+
+## Setup
 
 ### Prerequisites
 
-1.  **Python 3.8+**
-2.  **FFmpeg:** The `ffmpeg` command-line tool **must** be installed on your system and accessible via your system's PATH. This is essential for all video encoding operations.
-3.  **PyTorch & CUDA (Recommended):** For the fastest transcription performance, a system with a **CUDA-enabled GPU** and the appropriate PyTorch version is highly recommended. The application defaults gracefully to CPU if no GPU is found.
+- Python 3.9+
+- `pip`
+- FFmpeg available on the system `PATH`
 
-### Steps
+Whisper invokes FFmpeg for media decoding, so FFmpeg must be installed separately.
 
-1.  **Clone the repository:**
+A CUDA-capable PyTorch installation is optional. CPU execution is supported but transcription and rendering may be substantially slower.
 
-    ```bash
-    git clone https://github.com/YourUsername/videogen-pro.git
-    cd videogen-pro
-    ```
+### 1. Clone the repository
 
-2.  **Create and activate a virtual environment:**
-
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Linux/macOS
-    .\venv\Scripts\activate   # On Windows
-    ```
-
-3.  **Install dependencies:**
-    You'll need a `requirements.txt` file (not provided, but inferred from the code).
-
-    ```bash
-    # Assuming you have a requirements.txt with flask, whisper, torch, moviepy, pillow, werkzeug, etc.
-    pip install -r requirements.txt
-
-    # If using GPU, ensure you install torch with CUDA support first!
-    # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cuXX
-    # pip install -U openai-whisper moviepy Pillow Flask
-    ```
-
-4.  **Set a Secret Key (Optional but Recommended):**
-    For production, you should set a secure secret key. It defaults to a generated UUID if not set.
-
-    ```bash
-    export FLASK_SECRET_KEY="your_very_secure_secret_key"
-    ```
-
-5.  **Run the application:**
-
-    ```bash
-    python your_app_file_name.py  # Replace with the actual file name (e.g., app.py)
-    ```
-
-The application will start, usually accessible at `http://127.0.0.1:5000/`.
-
------
-
-## ⚙️ How It Works
-
-1.  **Upload Images (Step 1):** Users upload images. These are saved to `static/uploads`. Drag-and-drop powered by **SortableJS** allows for quick reordering.
-2.  **Upload Audio (Step 2):** Users upload an audio file (MP3, WAV, etc.). This triggers a separate thread to run the **Whisper** transcription model, and the result is stored in the session.
-3.  **Generate Video (Step 3):**
-      * The user selects options (Aspect Ratio, Zoom Effect).
-      * A unique `task_id` is created, and a new thread starts the `fast_video_generation` function.
-      * The browser connects to `/progress/<task_id>` using **Server-Sent Events (SSE)** to get real-time progress updates.
-      * The video generation process loops through the ordered images, assigning each image an equal duration based on the audio length.
-      * The final clips are concatenated, and the original audio track is added.
-      * Once complete, the client-side JavaScript receives the `100%` signal and requests the final video details from `/complete_task/<task_id>`.
-
-## 📂 Project Structure
-
-```
-.
-├── static/
-│   ├── uploads/     # Stores uploaded images
-│   ├── audio/       # Stores uploaded audio
-│   ├── outputs/     # Stores final generated videos
-│   └── fonts/       # (Implied/missing but often used) Stores custom fonts
-├── tmp_segments/    # Used for temporary files during moviepy/ffmpeg processing
-├── templates/
-│   └── index.html   # The main (and only) HTML template
-└── your_app_file_name.py  # The main Flask application file
+```bash
+git clone https://github.com/SimranPabla/VideoGen-Pro.git
+cd VideoGen-Pro
 ```
 
------
+### 2. Create a virtual environment
 
-## 🌐 Roadmap & Potential Improvements
+Linux/macOS:
 
-  * **Segmented Captioning:** Currently, transcription is used for display only. A major upgrade would be to use the detailed Whisper segments for timed, accurate burn-in captions that change with the spoken word.
-  * **Cleanup Service:** Implement a scheduled task to periodically clean out old files from `uploads`, `audio`, and `outputs` to manage disk space.
-  * **Custom Fonts/Styling:** Allow users to upload or select different font styles and caption colors.
-  * **Dockerization:** Provide a `Dockerfile` for easy deployment in containerized environments.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
------
+Windows PowerShell:
 
-# 🧑‍💻 Author
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-### Simranjit Singh 
-* **📍 Edmonton, Alberta**
-* **💬 Passionate about AI, cybersecurity, and creative tech solutions.**
+### 3. Install Python dependencies
 
-## 🪪 License
-This project is open-source and available under the MIT License.
+```bash
+pip install -r requirements.txt
+```
+
+`moviepy<2` is specified because this code uses the MoviePy 1.x `moviepy.editor` API.
+
+### 4. Set a Flask secret key
+
+For a stable local session across process restarts, set `FLASK_SECRET_KEY` before starting the application.
+
+Linux/macOS:
+
+```bash
+export FLASK_SECRET_KEY="replace-with-a-random-secret"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:FLASK_SECRET_KEY="replace-with-a-random-secret"
+```
+
+If the variable is omitted, the application generates an ephemeral key at startup; existing browser sessions will therefore become invalid when the process restarts.
+
+### 5. Run
+
+```bash
+python app.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5000/
+```
+
+The first startup may take longer because Whisper may need to download the `base` model weights.
+
+## Runtime Directories
+
+The application creates these directories at runtime:
+
+```text
+static/
+├── uploads/
+├── audio/
+└── outputs/
+```
+
+They are excluded from Git by `.gitignore` because they contain generated/user-supplied runtime data.
+
+## Reliability and Security Considerations
+
+Implemented safeguards include:
+
+- `secure_filename` normalization
+- random storage prefixes to reduce upload collisions
+- explicit image/audio extension allowlists
+- validation that submitted image ordering matches the active session's uploaded files
+- session checks before serving uploaded audio/images or generated videos
+- session-specific cleanup during reset
+- unique temporary audio paths per render
+- a 200 MB request-size limit
+- configurable Flask secret key
+
+These controls improve the local prototype, but they do **not** make it a production multi-user service.
+
+## Limitations
+
+- Task progress is stored in a Python dictionary, so state is lost on process restart.
+- The progress store is not shared across multiple Flask workers or hosts.
+- Background rendering uses Python threads rather than a durable job queue.
+- Whisper transcription runs synchronously during audio upload and can block the request for large files or CPU-only systems.
+- There is no authentication or user-account model.
+- Runtime files from abandoned sessions are not removed by a scheduled cleanup service.
+- File extension checks do not perform full content-type or media-format validation.
+- There is currently no automated test suite.
+- The application has not been documented here as production-ready or horizontally scalable.
+
+## Engineering Decisions
+
+### Keep long-running rendering out of the request path
+
+Encoding is the longest application operation, so it is moved to a background thread and observed through SSE.
+
+### Keep progress transport simple
+
+SSE is sufficient for one-way progress updates from server to browser and avoids introducing WebSocket infrastructure for this prototype.
+
+### Prefer honest single-process semantics
+
+The application explicitly documents its in-memory progress state rather than implying that task state survives restarts or supports multiple workers.
+
+### Protect session boundaries before adding scale
+
+Asset routes and reset behavior are scoped to the active session so one browser session does not intentionally clear or retrieve another session's known files. A production version should go further and use per-user storage namespaces plus authentication/authorization.
+
+## Demo
+
+The repository previously referenced screenshots hosted in a different project. Those links were removed because they did not provide reliable evidence of this repository's current UI.
+
+For now, the supported demo path is to run the application locally using the setup steps above.
+
+## Future Work
+
+- Add unit and integration tests for upload, ordering, task lifecycle, and file authorization
+- Move rendering/transcription jobs to a durable worker queue
+- Store task state in Redis or another shared backend
+- Add scheduled cleanup for abandoned runtime files
+- Add stronger media validation beyond filename extensions
+- Add per-user storage namespaces and authentication if deployed for multiple users
+- Add timed Whisper segment captions to generated videos
+- Add Docker packaging and reproducible deployment configuration
+- Add structured application logging and task-level diagnostics
+
+## Project Status
+
+VideoGen Pro is an engineering prototype demonstrating Flask application design, asynchronous media processing, Whisper integration, MoviePy/FFmpeg composition, SSE progress reporting, and practical file/session lifecycle handling.
+
+It should be evaluated as a prototype with documented limitations, not as a production video platform.
