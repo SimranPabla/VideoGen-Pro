@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VideoGen Pro ✨</title>
+<title>VideoGen Pro</title>
 <style>
 :root{
     --color-primary:#3b82f6;
@@ -16,14 +16,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 h1{margin:0 0 8px;color:var(--color-text-main)}
 .card{background:#f9fbfd;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #eef6ff}
 input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;border:2px dashed #dbeafe;background:#fbfdff}
-.btn{background:var(--color-primary);color:#fff;padding:10px 16px;border-radius:8px;border:none;cursor:pointer}
+.btn{background:var(--color-primary);color:#fff;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;text-decoration:none;display:inline-block}
 .btn-reset{background:#ef4444}
 #imageOrderList{list-style:none;padding:0;margin:8px 0;display:flex;flex-wrap:wrap;gap:16px}
 #imageOrderList li{min-width:120px;display:flex;flex-direction:column;align-items:center;cursor:grab;padding:8px;background:#fff;border-radius:8px;border:1px solid #eef6ff}
 .order-item.dragging{opacity:0.6}
 .image-thumb{width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #e6f0ff;display:block;margin-bottom:6px;text-align:center}
 
-/* Progress Bar */
 #progress-container{
     height:24px;
     border-radius:12px;
@@ -52,48 +51,45 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
 </head>
 <body data-task-id="{{ task_id or '' }}">
 <div class="container">
-    <h1>VideoGen Pro ✨</h1>
-    <p style="color:var(--color-text-secondary)">Upload images & audio, reorder images, and generate your video.</p>
+    <h1>VideoGen Pro</h1>
+    <p style="color:var(--color-text-secondary)">Upload images and audio, reorder images, and generate a narrated video.</p>
 
-    <!-- Progress Bar (sticky top) -->
     <div id="progress-container">
         <div id="progress-bar">0%</div>
     </div>
     <p id="progress-message" style="font-weight:600;color:var(--color-text-secondary);min-height:1.2em"></p>
 
-    <!-- Step 1: Upload Images -->
-    <!-- Step 1 — Upload Images -->
-<div class="card">
-    <h3>Step 1 — Upload Images</h3>
-    {% if not uploaded_images %}
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="images" accept="image/*" multiple required>
-        <button class="btn" type="submit">Upload Images</button>
-    </form>
-    {% else %}
-    <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
+    <div class="card">
+        <h3>Step 1 — Upload Images</h3>
+        {% if not uploaded_images %}
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="images" accept="image/*" multiple required>
+            <button class="btn" type="submit">Upload Images</button>
+        </form>
+        {% else %}
+        <p><strong>{{ uploaded_images|length }}</strong> images uploaded.</p>
 
-    <!-- Add More Images Form -->
-    <form method="POST" enctype="multipart/form-data" style="margin-bottom:12px;">
-        <input type="file" name="images" accept="image/*" multiple required>
-        <button class="btn" type="submit">➕ Add More Images</button>
-    </form>
+        <form method="POST" enctype="multipart/form-data" style="margin-bottom:12px;">
+            <input type="file" name="images" accept="image/*" multiple required>
+            <button class="btn" type="submit">Add More Images</button>
+        </form>
 
-    <a href="{{ url_for('reset') }}" class="btn btn-reset">🗑️ Reset All</a>
+        <form method="POST" action="{{ url_for('reset') }}" style="margin-bottom:12px;">
+            <button class="btn btn-reset" type="submit">Reset Session</button>
+        </form>
 
-    <h4>Reorder Images (drag & drop)</h4>
-    <ul id="imageOrderList">
-        {% for img in uploaded_images %}
-        <li class="order-item" data-filename="{{ img }}">
-            <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
-            <div style="text-align:center;font-size:12px;margin-top:4px">{{ img }}</div>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-</div>
+        <h4>Reorder Images (drag & drop)</h4>
+        <ul id="imageOrderList">
+            {% for img in uploaded_images %}
+            <li class="order-item" data-filename="{{ img }}">
+                <img class="image-thumb" src="{{ url_for('send_uploaded', filename=img) }}" alt="thumb">
+                <div style="text-align:center;font-size:12px;margin-top:4px">{{ img.split('__', 1)[1] if '__' in img else img }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
 
-    <!-- Step 2: Upload Audio -->
     {% if uploaded_images and not uploaded_audio %}
     <div class="card">
         <h3>Step 2 — Upload Audio</h3>
@@ -104,7 +100,6 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
     </div>
     {% endif %}
 
-    <!-- Step 3: Generate Video -->
     {% if uploaded_images and uploaded_audio %}
     <div class="card">
         <h3>Step 3 — Generate Video</h3>
@@ -127,33 +122,29 @@ input[type=file]{display:block;margin:8px 0;padding:10px;border-radius:8px;borde
             <div id="imageOrderHiddenInputs"></div>
 
             <div style="margin-top:12px">
-                <button class="btn" name="generate" value="video" type="submit">🚀 Start Video Generation</button>
-                {% if result_video %}
-                <button class="btn" type="button" id="regenerateBtn" style="margin-left:12px">🔄 Regenerate Video</button>
-                {% endif %}
+                <button class="btn" name="generate" value="video" type="submit">Start Video Generation</button>
             </div>
         </form>
     </div>
     {% endif %}
 
-    <!-- Audio Transcript -->
     {% if uploaded_audio %}
     <div class="card">
-        <h3>🎤 Audio Transcript</h3>
-        <pre style="white-space:pre-wrap;word-wrap:break-word;color:var(--color-text-main);background:#f0f4f8;padding:12px;border-radius:8px;border:1px solid #eef6ff;">
-            {{ audio_transcript or "Transcription will appear here..." }}
-        </pre>
+        <h3>Audio Transcript</h3>
+        <pre style="white-space:pre-wrap;word-wrap:break-word;color:var(--color-text-main);background:#f0f4f8;padding:12px;border-radius:8px;border:1px solid #eef6ff;">{{ audio_transcript or "No transcript available." }}</pre>
     </div>
     {% endif %}
 
-    <!-- Generated Video -->
     <div class="card" id="video-section" {% if not result_video %}style="display:none"{% endif %}>
-        <h3>🎬 Generated Video</h3>
-        <video id="resultVideo" width="640" controls autoplay loop>
+        <h3>Generated Video</h3>
+        <video id="resultVideo" width="640" controls>
+            {% if result_video %}
+            <source src="{{ url_for('send_output', filename=result_video) }}" type="video/mp4">
+            {% endif %}
         </video>
         <p>
             {% if result_video %}
-            <a class="btn" id="downloadVideo" href="{{ url_for('send_output', filename=result_video) }}" download>⬇️ Download Final Video</a>
+            <a class="btn" id="downloadVideo" href="{{ url_for('send_output', filename=result_video) }}" download>Download Final Video</a>
             {% endif %}
         </p>
     </div>
@@ -165,7 +156,7 @@ const imageOrderList = document.getElementById('imageOrderList');
 if (imageOrderList) new Sortable(imageOrderList,{animation:150,ghostClass:'dragging'});
 
 document.querySelectorAll('form.options').forEach(formEl=>{
-    formEl.addEventListener('submit',e=>{
+    formEl.addEventListener('submit',()=>{
         const container=document.getElementById('imageOrderHiddenInputs');
         container.innerHTML='';
         if(imageOrderList){
@@ -187,44 +178,44 @@ function monitorProgress(taskId){
 
     const source = new EventSource(`/progress/${taskId}`);
     source.onmessage=function(event){
-        let progress=parseInt(event.data);
+        const progress=parseInt(event.data);
         if(progress>=0 && progress<=100){
             progressBar.style.width=progress+'%';
             progressBar.textContent=progress+'%';
             progressBar.classList.remove('progress-error');
             if(progress===100){
                 source.close();
-                fetch(`/complete_task/${taskId}`)
+                fetch(`/complete_task/${taskId}`, {method: 'POST'})
                 .then(r => r.json())
                 .then(data => {
                     if (data.status === 'ok') {
                         const filename = data.filename;
-                        const timestamp = Date.now();
-                        const videoUrl = `/outputs/${filename}?t=${timestamp}`;
-
+                        const videoUrl = `/outputs/${filename}?t=${Date.now()}`;
                         const video = document.getElementById('resultVideo');
                         const downloadBtn = document.getElementById('downloadVideo');
 
                         if (video) {
                             video.src = videoUrl;
                             video.load();
-                            video.play();
                         }
                         if (downloadBtn) downloadBtn.href = videoUrl;
 
                         document.getElementById('video-section').style.display = 'block';
-                        progressMessage.textContent = '✅ Video Updated!';
+                        progressMessage.textContent = 'Video generation complete.';
                     } else {
-                        progressMessage.textContent = '❌ ' + (data.message || 'Video Generation Failed.');
+                        progressMessage.textContent = data.message || 'Video generation failed.';
                         progressBar.style.width = '100%';
                         progressBar.classList.add('progress-error');
                         progressBar.textContent = 'ERROR';
                     }
                 })
-                .catch(err => { console.error(err); });
+                .catch(err => {
+                    console.error(err);
+                    progressMessage.textContent = 'Unable to retrieve the completed task.';
+                });
             }
         } else if(progress===-1){
-            progressMessage.textContent='❌ Video Generation Failed.';
+            progressMessage.textContent='Video generation failed.';
             progressBar.style.width='100%';
             progressBar.classList.add('progress-error');
             progressBar.textContent='ERROR';
@@ -235,12 +226,8 @@ function monitorProgress(taskId){
 }
 
 window.addEventListener('load', () => {
-    const TASK_ID = document.body.dataset.taskId || null;
-    if (TASK_ID) {
-        monitorProgress(TASK_ID);
-        const pc = document.getElementById('progress-container');
-        if (pc) pc.style.visibility = 'visible';
-    }
+    const taskId = document.body.dataset.taskId || null;
+    if (taskId) monitorProgress(taskId);
 });
 </script>
 </body>
