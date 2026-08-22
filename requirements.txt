@@ -1,0 +1,4 @@
+Flask
+openai-whisper
+torch
+moviepy<2
